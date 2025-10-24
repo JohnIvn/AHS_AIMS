@@ -8,18 +8,18 @@ export class GoogleFormsService {
 
   constructor() {
     const auth = new google.auth.GoogleAuth({
-      keyFile: path.join(__dirname, '../../google-credentials.json'),
+      keyFile: path.join(__dirname, '../../key.json'),
       scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
     });
 
     this.sheets = google.sheets({ version: 'v4', auth });
   }
 
-  async getFormResponses(
-    sheetId: string,
-    range: string = 'Form Responses!A:Z',
-  ) {
+  async getFormResponses(sheetId: string, range: string) {
     try {
+      console.log(`Fetching from Sheet ID: ${sheetId}`);
+      console.log(`Range: ${range}`);
+
       const response = await this.sheets.spreadsheets.values.get({
         spreadsheetId: sheetId,
         range,
@@ -28,22 +28,75 @@ export class GoogleFormsService {
       const rows = response.data.values;
 
       if (!rows || rows.length === 0) {
-        return { message: 'No data found.' };
+        return {
+          message: 'No data found in the sheet.',
+          sheetId: sheetId,
+          range: range,
+        };
       }
 
       const headers = rows[0];
-      const data = rows.slice(1).map((row) => {
-        const obj = {};
-        headers.forEach((header, index) => {
-          obj[header] = row[index] || '';
+      const data = rows.slice(1).map((row, index) => {
+        const obj = {
+          id: index + 1,
+        };
+        headers.forEach((header, colIndex) => {
+          const cleanHeader = header.trim().replace(/\s+/g, '_');
+          obj[cleanHeader] = row[colIndex] || '';
         });
         return obj;
       });
 
-      return data;
+      return {
+        success: true,
+        sheetId: sheetId,
+        range: range,
+        headers: headers,
+        totalRecords: data.length,
+        data: data,
+      };
     } catch (error) {
-      console.error('Error fetching Google Form responses:', error);
-      throw error;
+      console.error('Google Sheets API Error:', error.message);
+
+      if (error.message.includes('Unable to parse range')) {
+        throw new Error(
+          `Sheet name not found. Looking for range: "${range}". Please check the sheet name in your Google Sheets.`,
+        );
+      } else if (error.message.includes('Unable to read sheet')) {
+        throw new Error(
+          `No read access to spreadsheet: ${sheetId}. Check permissions.`,
+        );
+      } else if (error.message.includes('Requested entity was not found')) {
+        throw new Error(
+          `Spreadsheet not found: ${sheetId}. Check the Sheet ID.`,
+        );
+      } else {
+        throw new Error(`Google Sheets API error: ${error.message}`);
+      }
+    }
+  }
+
+  async getSheetNames(sheetId: string) {
+    try {
+      const response = await this.sheets.spreadsheets.get({
+        spreadsheetId: sheetId,
+      });
+
+      const sheets = response.data.sheets.map((sheet) => ({
+        title: sheet.properties.title,
+        sheetId: sheet.properties.sheetId,
+        index: sheet.properties.index,
+      }));
+
+      return {
+        success: true,
+        spreadsheetId: sheetId,
+        sheets: sheets,
+        totalSheets: sheets.length,
+      };
+    } catch (error) {
+      console.error('Error fetching sheet names:', error.message);
+      throw new Error(`Failed to get sheet names: ${error.message}`);
     }
   }
 }
