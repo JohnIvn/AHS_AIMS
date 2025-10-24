@@ -17,3 +17,13 @@ model staff_account {
   date_created   DateTime @default(now())
   status         String   @default("active")
 }
+
+model appoinment_details {
+  user_id        String   @id @default(uuid())
+  first_name     String
+  last_name      String
+  contact_number String?
+  email          String   @unique
+  date_created   DateTime @default(now())
+  status         String   @default("active")
+}
