@@ -7,7 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Staff_Account {
+model staff_account {
   staff_id       String   @id @default(uuid())
   first_name     String
   last_name      String

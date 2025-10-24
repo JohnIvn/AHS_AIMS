@@ -1,5 +1,5 @@
 -- CreateTable
-CREATE TABLE "Staff_Account" (
+CREATE TABLE "staff_account" (
     "staff_id" TEXT NOT NULL,
     "first_name" TEXT NOT NULL,
     "last_name" TEXT NOT NULL,
@@ -9,8 +9,8 @@ CREATE TABLE "Staff_Account" (
     "date_created" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "status" TEXT NOT NULL DEFAULT 'active',
 
-    CONSTRAINT "Staff_Account_pkey" PRIMARY KEY ("staff_id")
+    CONSTRAINT "staff_account_pkey" PRIMARY KEY ("staff_id")
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Staff_Account_email_key" ON "Staff_Account"("email");
+CREATE UNIQUE INDEX "staff_account_email_key" ON "staff_account"("email");
