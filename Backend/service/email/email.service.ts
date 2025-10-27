@@ -6,7 +6,7 @@ import {
 } from './email.utils';
 import chalk from 'chalk';
 
-console.log(chalk.bgBlue.black('[SERVICE] Email service loaded'));
+console.log(chalk.bgBlue.black('[SERVICE]') + '     - Email service loaded');
 
 @Injectable()
 export class EmailService {

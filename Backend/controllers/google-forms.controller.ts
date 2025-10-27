@@ -2,7 +2,9 @@ import { Controller, Get } from '@nestjs/common';
 import chalk from 'chalk';
 import { GoogleFormsService } from '../service/google/google-forms.service';
 
-console.log(chalk.bgGreen.black('[CONTROLLER] Google Forms controller loaded'));
+console.log(
+  chalk.bgGreen.black('[CONTROLLER]') + '  - Google Forms controller loaded',
+);
 
 @Controller('google-forms')
 export class GoogleFormsController {
