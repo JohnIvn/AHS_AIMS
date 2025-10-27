@@ -2,7 +2,6 @@ import { app, BrowserWindow } from "electron";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 
-// Fix __dirname for ESM
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
@@ -13,6 +12,9 @@ function createWindow() {
   const win = new BrowserWindow({
     width: 800,
     height: 600,
+    autoHideMenuBar: true,
+    title: "My Cool App",
+    icon: join(__dirname, "../public/logo.png"),
     webPreferences: {
       preload: join(__dirname, "preload.js"),
       nodeIntegration: false,
