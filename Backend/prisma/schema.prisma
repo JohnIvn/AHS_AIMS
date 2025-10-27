@@ -27,3 +27,12 @@ model appoinment_details {
   date_created   DateTime @default(now())
   status         String   @default("active")
 }
+
+model verification_code {
+  id          String   @id @default(cuid())
+  email       String
+  code        String
+  created_at  DateTime @default(now())
+  expires_at  DateTime
+  used        Boolean  @default(false)
+}
