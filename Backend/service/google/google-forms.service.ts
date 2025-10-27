@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { google } from 'googleapis';
 import * as path from 'path';
+import chalk from 'chalk';
+
+console.log(chalk.bgBlue.black('[SERVICE] Google Sheets service loaded'));
 
 @Injectable()
 export class GoogleFormsService {
