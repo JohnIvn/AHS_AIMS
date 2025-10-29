@@ -43,8 +43,8 @@ export class GoogleFormsService {
 
   async getFormResponses(sheetId: string, range: string) {
     try {
-      console.log(`Fetching from Sheet ID: ${sheetId}`);
-      console.log(`Range: ${range}`);
+      // console.log(`Fetching from Sheet ID: ${sheetId}`);
+      // console.log(`Range: ${range}`);
 
       const response = await this.sheets.spreadsheets.values.get({
         spreadsheetId: sheetId,

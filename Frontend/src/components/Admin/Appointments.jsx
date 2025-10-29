@@ -32,12 +32,24 @@ export default function Appointments() {
 
     return rows.map((row) => {
       const firstKey = findKey(row, ["first_name", "firstname", "given_name"]);
+      const middleKey = findKey(row, [
+        "middle_name",
+        "middlename",
+        "middle",
+        "mi",
+      ]);
       const lastKey = findKey(row, ["last_name", "lastname", "family_name"]);
       const nameKey = findKey(row, [
         "patient_name",
         "name",
         "full_name",
         "patient",
+      ]);
+      const emailKey = findKey(row, [
+        "email",
+        "email_address",
+        "emailaddress",
+        "e-mail",
       ]);
       const reasonKey = findKey(row, ["reason", "purpose", "concern", "notes"]);
       const statusKey = findKey(row, ["status", "appointment_status"]);
@@ -60,18 +72,21 @@ export default function Appointments() {
           : new Date().toISOString();
 
       let patientName = "Unknown";
-      if (firstKey || lastKey) {
-        patientName =
-          `${firstKey ? norm(row[firstKey]) : ""} ${
-            lastKey ? norm(row[lastKey]) : ""
-          }`.trim() || "Unknown";
+      if (firstKey || middleKey || lastKey) {
+        const parts = [
+          firstKey ? norm(row[firstKey]) : "",
+          middleKey ? norm(row[middleKey]) : "",
+          lastKey ? norm(row[lastKey]) : "",
+        ].filter(Boolean);
+        patientName = parts.join(" ").trim() || "Unknown";
       } else if (nameKey) {
         patientName = norm(row[nameKey]) || "Unknown";
       }
 
       return {
-        id: row.id ?? `${norm(row[nameKey])}-${dateTime}`,
+        id: row.id ?? `${patientName || "unknown"}-${dateTime}`,
         patientName,
+        email: emailKey ? norm(row[emailKey]) : "",
         dateTime,
         reason: reasonKey ? norm(row[reasonKey]) : "",
         status: statusKey ? norm(row[statusKey]).toLowerCase() : "pending",
@@ -110,7 +125,8 @@ export default function Appointments() {
       result = result.filter(
         (a) =>
           a.patientName.toLowerCase().includes(q) ||
-          a.reason.toLowerCase().includes(q)
+          a.reason.toLowerCase().includes(q) ||
+          (a.email || "").toLowerCase().includes(q)
       );
     }
     result.sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
@@ -137,7 +153,8 @@ export default function Appointments() {
           filtered = filtered.filter(
             (a) =>
               a.patientName.toLowerCase().includes(q) ||
-              a.reason.toLowerCase().includes(q)
+              a.reason.toLowerCase().includes(q) ||
+              (a.email || "").toLowerCase().includes(q)
           );
         filtered.sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
         setItems(filtered);
@@ -168,20 +185,14 @@ export default function Appointments() {
 
   return (
     <div className="auth-card">
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          gap: 12,
-          alignItems: "center",
-        }}
-      >
+      <div className="toolbar">
         <h2>Appointments</h2>
         <input
-          placeholder="Search by name or reason"
+          placeholder="Search by name, reason, or email"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          style={{ maxWidth: 280 }}
+          className="input"
+          style={{ maxWidth: 320 }}
         />
       </div>
 
@@ -203,13 +214,14 @@ export default function Appointments() {
         </div>
       )}
 
-      <div className="table" style={{ marginTop: 12, overflowX: "auto" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+      <div className="table-wrapper">
+        <table className="table">
           <thead>
             <tr>
               <th align="left">Date</th>
               <th align="left">Time</th>
-              <th align="left">Patient</th>
+              <th align="left">Full Name</th>
+              <th align="left">Email</th>
               <th align="left">Reason</th>
               <th align="left">Status</th>
               {/* Actions removed in read-only mode */}
@@ -231,12 +243,25 @@ export default function Appointments() {
                   minute: "2-digit",
                 });
                 return (
-                  <tr key={a.id} style={{ borderTop: "1px solid #eee" }}>
+                  <tr key={a.id}>
                     <td>{dateStr}</td>
                     <td>{timeStr}</td>
                     <td>{a.patientName}</td>
-                    <td>{a.reason}</td>
-                    <td>{a.status}</td>
+                    <td>
+                      {a.email ? (
+                        <a href={`mailto:${a.email}`}>{a.email}</a>
+                      ) : (
+                        "-"
+                      )}
+                    </td>
+                    <td className="truncate" title={a.reason}>
+                      {a.reason}
+                    </td>
+                    <td>
+                      <span className={`status-badge status-${a.status}`}>
+                        {a.status}
+                      </span>
+                    </td>
                   </tr>
                 );
               })
