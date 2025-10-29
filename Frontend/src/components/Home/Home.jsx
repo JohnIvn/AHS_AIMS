@@ -43,6 +43,12 @@ export default function Home({ user, onSignOut, onNavigate }) {
           "full_name",
           "patient",
         ]);
+        const emailKey = findKey(row, [
+          "email",
+          "email_address",
+          "emailaddress",
+          "e-mail",
+        ]);
         const reasonKey = findKey(row, [
           "reason",
           "purpose",
@@ -77,6 +83,7 @@ export default function Home({ user, onSignOut, onNavigate }) {
         return {
           id: row.id ?? `${norm(row[nameKey])}-${dateTime}`,
           patientName,
+          email: emailKey ? norm(row[emailKey]) : "",
           dateTime,
           reason: reasonKey ? norm(row[reasonKey]) : "",
           status: statusKey ? norm(row[statusKey]).toLowerCase() : "pending",
@@ -114,7 +121,40 @@ export default function Home({ user, onSignOut, onNavigate }) {
         if (!res.ok) throw new Error(`Request failed: ${res.status}`);
         const json = await res.json();
         const rows = json?.data || [];
-        const mapped = mapRowsToItems(rows);
+        let mapped = mapRowsToItems(rows);
+        // Merge DB statuses so dashboard reflects accept/deny
+        const emails = Array.from(
+          new Set(
+            mapped.map((m) => (m.email || "").toLowerCase()).filter(Boolean)
+          )
+        );
+        if (emails.length > 0) {
+          try {
+            const chk = await fetch("/api/appointments/check", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ emails }),
+            });
+            if (chk.ok) {
+              const data = await chk.json();
+              const statusMap = (data.items || []).reduce((acc, it) => {
+                acc[(it.email || "").toLowerCase()] = (
+                  it.status || ""
+                ).toLowerCase();
+                return acc;
+              }, {});
+              mapped = mapped.map((m) => {
+                const dbStatus = statusMap[(m.email || "").toLowerCase()];
+                if (dbStatus && ["accepted", "denied"].includes(dbStatus)) {
+                  return { ...m, status: dbStatus };
+                }
+                return m;
+              });
+            }
+          } catch (e) {
+            console.warn("Dashboard status merge failed:", e?.message || e);
+          }
+        }
         // recent by createdAt desc
         const recentItems = [...mapped]
           .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))

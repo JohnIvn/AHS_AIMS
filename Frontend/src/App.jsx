@@ -5,6 +5,7 @@ import SignUpStaff from "./components/Auth/SignUpStaff";
 import ForgotPassword from "./components/Auth/ForgotPassword";
 import Home from "./components/Home/Home";
 import Appointments from "./components/Admin/Appointments";
+import Stats from "./components/Admin/Stats";
 import Profile from "./components/Admin/Profile";
 
 function App() {
@@ -20,7 +21,7 @@ function App() {
       if (tab === "signin" || tab === "signup" || tab === "forgot") {
         setTab("home");
       }
-    } else if (["home", "appointments", "profile"].includes(tab)) {
+    } else if (["home", "appointments", "profile", "stats"].includes(tab)) {
       setTab("signin");
     }
   }, [auth]);
@@ -56,7 +57,7 @@ function App() {
             </button>
           </nav>
         ) : (
-          <div className="tabs" style={{ flexWrap: "wrap" }}>
+          <div className="tabs">
             <button
               className={tab === "home" ? "active" : ""}
               onClick={() => setTab("home")}
@@ -68,6 +69,12 @@ function App() {
               onClick={() => setTab("appointments")}
             >
               Appointments
+            </button>
+            <button
+              className={tab === "stats" ? "active" : ""}
+              onClick={() => setTab("stats")}
+            >
+              Stats
             </button>
             <button
               className={tab === "profile" ? "active" : ""}
@@ -107,6 +114,7 @@ function App() {
           />
         )}
         {tab === "appointments" && <Appointments />}
+        {tab === "stats" && <Stats />}
         {tab === "profile" && (
           <Profile user={auth?.user} onUpdateUser={handleUpdateUser} />
         )}
