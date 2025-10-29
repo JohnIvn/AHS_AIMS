@@ -111,6 +111,19 @@ header h1 {
   background: rgba(255, 255, 255, 0.03);
 }
 
+/* Keep action buttons on one line */
+.table th.actions,
+.table td.actions {
+  white-space: nowrap;
+  width: 1%;
+}
+.actions-inline {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: nowrap;
+}
+
 /* Status badges */
 .status-badge {
   display: inline-flex;

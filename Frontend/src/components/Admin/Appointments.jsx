@@ -347,7 +347,9 @@ export default function Appointments() {
               <th align="left">Email</th>
               <th align="left">Reason</th>
               <th align="left">Status</th>
-              <th align="left">Actions</th>
+              <th align="left" className="actions">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -385,11 +387,9 @@ export default function Appointments() {
                         {a.status}
                       </span>
                     </td>
-                    <td>
+                    <td className="actions">
                       {a.status === "pending" && !a.locked ? (
-                        <div
-                          style={{ display: "flex", gap: 8, flexWrap: "wrap" }}
-                        >
+                        <div className="actions-inline">
                           <button
                             onClick={() => handleDecision(a, "accepted")}
                             disabled={busyId === a.id || !a.email}
