@@ -252,7 +252,7 @@ export default function Home({ user, onSignOut, onNavigate }) {
                       {dateStr} • {timeStr} • {a.reason}
                     </div>
                   </div>
-                  <span style={{ fontSize: 12, color: "#555" }}>
+                  <span className={`status-badge status-${a.status}`}>
                     {a.status}
                   </span>
                 </li>
