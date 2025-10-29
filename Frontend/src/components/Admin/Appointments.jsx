@@ -5,6 +5,7 @@ export default function Appointments() {
   const [search, setSearch] = useState("");
   const [allItems, setAllItems] = useState([]);
   const [items, setItems] = useState([]);
+  const [busyId, setBusyId] = useState(null);
   const [stats, setStats] = useState({
     total: 0,
     pending: 0,
@@ -183,6 +184,82 @@ export default function Appointments() {
     [stats]
   );
 
+  const extractNames = (item) => {
+    const norm = (s) => (s || "").toString().trim();
+    const row = item.raw || {};
+    const keys = Object.keys(row).reduce((acc, k) => {
+      acc[k.toLowerCase()] = k;
+      return acc;
+    }, {});
+    const get = (...cands) => {
+      for (const c of cands) {
+        const k = keys[c.toLowerCase()];
+        if (k) return norm(row[k]);
+      }
+      return "";
+    };
+    const first = get("first_name", "firstname", "given_name");
+    const middle = get("middle_name", "middlename", "middle", "mi");
+    const last = get("last_name", "lastname", "family_name");
+    if (first || middle || last) {
+      return {
+        firstName: [first, middle].filter(Boolean).join(" ") || "Unknown",
+        lastName: last || "Unknown",
+      };
+    }
+    // Fallback: split patientName into first/middle(last)
+    const parts = norm(item.patientName).split(/\s+/).filter(Boolean);
+    if (parts.length === 0)
+      return { firstName: "Unknown", lastName: "Unknown" };
+    if (parts.length === 1) return { firstName: parts[0], lastName: "Unknown" };
+    return {
+      firstName: parts.slice(0, -1).join(" "),
+      lastName: parts.slice(-1)[0],
+    };
+  };
+
+  const handleDecision = async (item, decision) => {
+    try {
+      if (!item.email) {
+        setError("Email is required to record a decision.");
+        return;
+      }
+      setBusyId(item.id);
+      setError("");
+      const { firstName, lastName } = extractNames(item);
+      const payload = {
+        firstName,
+        lastName,
+        email: item.email,
+        contactNumber: "",
+        reason: item.reason || "",
+        status: decision,
+      };
+      const res = await fetch("/api/appointments/decision", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || `Failed to record decision (${res.status})`);
+      }
+      // Optimistically update local state
+      setAllItems((prev) =>
+        prev.map((p) =>
+          p.id === item.id
+            ? { ...p, status: decision, updatedAt: new Date().toISOString() }
+            : p
+        )
+      );
+    } catch (e) {
+      console.error(e);
+      setError(e.message || "Failed to record decision");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   return (
     <div className="auth-card">
       <div className="toolbar">
@@ -224,6 +301,7 @@ export default function Appointments() {
               <th align="left">Email</th>
               <th align="left">Reason</th>
               <th align="left">Status</th>
+              <th align="left">Actions</th>
               {/* Actions removed in read-only mode */}
             </tr>
           </thead>
@@ -261,6 +339,26 @@ export default function Appointments() {
                       <span className={`status-badge status-${a.status}`}>
                         {a.status}
                       </span>
+                    </td>
+                    <td>
+                      <div
+                        style={{ display: "flex", gap: 8, flexWrap: "wrap" }}
+                      >
+                        <button
+                          onClick={() => handleDecision(a, "accepted")}
+                          disabled={busyId === a.id || !a.email}
+                          style={{ padding: "6px 10px" }}
+                        >
+                          Accept
+                        </button>
+                        <button
+                          onClick={() => handleDecision(a, "denied")}
+                          disabled={busyId === a.id || !a.email}
+                          style={{ padding: "6px 10px", background: "#2a2f45" }}
+                        >
+                          Deny
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
