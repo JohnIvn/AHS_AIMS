@@ -7,6 +7,7 @@ export default function ForgotPassword({ onBack }) {
   const [newPassword, setNewPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
+  const [showPwd, setShowPwd] = useState(false);
 
   const sendCode = async () => {
     setLoading(true);
@@ -120,13 +121,22 @@ export default function ForgotPassword({ onBack }) {
 
           <label>
             New password
-            <input
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              required
-              placeholder="••••••••"
-            />
+            <div className="inline">
+              <input
+                type={showPwd ? "text" : "password"}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => setShowPwd((s) => !s)}
+              >
+                {showPwd ? "Hide" : "Show"}
+              </button>
+            </div>
           </label>
 
           <div className="inline">

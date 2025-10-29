@@ -6,6 +6,7 @@ export default function SignIn({ onForgot, onSuccess }) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
   const [user, setUser] = useState(null);
+  const [showPwd, setShowPwd] = useState(false);
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -56,13 +57,22 @@ export default function SignIn({ onForgot, onSuccess }) {
 
         <label>
           Password
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            placeholder="••••••••"
-          />
+          <div className="inline">
+            <input
+              type={showPwd ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              placeholder="••••••••"
+            />
+            <button
+              type="button"
+              className="secondary"
+              onClick={() => setShowPwd((s) => !s)}
+            >
+              {showPwd ? "Hide" : "Show"}
+            </button>
+          </div>
         </label>
 
         <button type="submit" disabled={loading}>

@@ -131,10 +131,36 @@ export class SignUpStaffController {
   @Post('signupst')
   async signUp(@Body() body: SignUpDto) {
     try {
+      const firstName = (body as any).first_name ?? (body as any).f_name;
+      const lastName = (body as any).last_name ?? (body as any).l_name;
+
+      if (!firstName || !lastName) {
+        return { success: false, message: 'First and last name are required' };
+      }
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(body.email || '')) {
+        return { success: false, message: 'A valid email is required' };
+      }
+
+      if (!body.password || body.password.length < 8) {
+        return {
+          success: false,
+          message: 'Password must be at least 8 characters',
+        };
+      }
+
       if (!body.contact_number || body.contact_number.trim() === '') {
         return {
           success: false,
           message: 'Contact number is required',
+        };
+      }
+
+      if (!/^09\d{9}$/.test((body.contact_number || '').replace(/\s+/g, ''))) {
+        return {
+          success: false,
+          message: 'Contact number must match 09XXXXXXXXX',
         };
       }
 
@@ -204,8 +230,6 @@ export class SignUpStaffController {
 
       const hashedPassword = await bcrypt.hash(body.password, 10);
       const staffId = randomUUID();
-      const firstName = (body as any).first_name ?? (body as any).f_name;
-      const lastName = (body as any).last_name ?? (body as any).l_name;
 
       const staff = await this.prisma.staff_account.create({
         data: {
@@ -236,7 +260,6 @@ export class SignUpStaffController {
     } catch (error: any) {
       console.error(chalk.red('[ERROR]'), error);
 
-      // Handle Prisma unique constraint errors
       if (error.code === 'P2002') {
         const target = (error.meta?.target || []) as string[];
         if (
