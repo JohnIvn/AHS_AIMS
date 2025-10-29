@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-export default function SignIn() {
+export default function SignIn({ onForgot }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -65,6 +65,16 @@ export default function SignIn() {
           {loading ? "Signing in…" : "Sign In"}
         </button>
       </form>
+
+      <div style={{ marginTop: 8 }}>
+        <button
+          type="button"
+          className="link-button"
+          onClick={() => onForgot && onForgot()}
+        >
+          Forgot password?
+        </button>
+      </div>
 
       {message && (
         <p className={message.type === "error" ? "error" : "success"}>

@@ -2,6 +2,7 @@ import { useState } from "react";
 import "./App.css";
 import SignIn from "./components/Auth/SignIn";
 import SignUpStaff from "./components/Auth/SignUpStaff";
+import ForgotPassword from "./components/Auth/ForgotPassword";
 
 function App() {
   const [tab, setTab] = useState("signin");
@@ -26,7 +27,11 @@ function App() {
         </nav>
       </header>
 
-      <main>{tab === "signin" ? <SignIn /> : <SignUpStaff />}</main>
+      <main>
+        {tab === "signin" && <SignIn onForgot={() => setTab("forgot")} />}
+        {tab === "signup" && <SignUpStaff />}
+        {tab === "forgot" && <ForgotPassword onBack={() => setTab("signin")} />}
+      </main>
     </div>
   );
 }

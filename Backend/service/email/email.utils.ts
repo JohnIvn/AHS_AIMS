@@ -81,3 +81,39 @@ export async function sendAppointmentEmail(
 
   await transporter.sendMail(mailOptions);
 }
+
+export async function sendPasswordResetEmail(
+  to: string,
+  code: string,
+): Promise<void> {
+  const transporter = nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false,
+    auth: {
+      user: process.env.MAIL_USER,
+      pass: process.env.MAIL_PASS,
+    },
+  });
+
+  const mailOptions = {
+    from: `"My App" <${process.env.MAIL_USER}>`,
+    to,
+    subject: 'Password Reset Code',
+    text: `Your password reset code is: ${code}. This code will expire in 10 minutes.`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #333;">Password Reset</h2>
+        <p>Your password reset code is:</p>
+        <div style="background: #f4f4f4; padding: 15px; border-radius: 5px; text-align: center; margin: 20px 0;">
+          <h1 style="margin: 0; color: #333; letter-spacing: 5px;">${code}</h1>
+        </div>
+        <p style="color: #666; font-size: 14px;">
+          This code will expire in 10 minutes. If you didn't request a password reset, you can ignore this email.
+        </p>
+      </div>
+    `,
+  };
+
+  await transporter.sendMail(mailOptions);
+}

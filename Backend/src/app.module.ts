@@ -10,6 +10,7 @@ import { PrismaService } from 'service/prisma/prisma.service';
 import { GoogleFormsController } from '../controllers/google-forms.controller';
 import { SignInController } from '../controllers/signin.controller';
 import { SignUpStaffController } from '../controllers/signup.controller';
+import { ForgotPasswordController } from '../controllers/forgot-password.controller';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -22,7 +23,12 @@ import { SignUpStaffController } from '../controllers/signup.controller';
       signOptions: { expiresIn: '1h' },
     }),
   ],
-  controllers: [GoogleFormsController, SignInController, SignUpStaffController],
+  controllers: [
+    GoogleFormsController,
+    SignInController,
+    SignUpStaffController,
+    ForgotPasswordController,
+  ],
   providers: [GoogleFormsService, EmailService, DatabaseService, PrismaService],
 })
 export class AppModule {}
