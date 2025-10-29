@@ -4,6 +4,7 @@ import {
   sendVerificationEmail,
   sendAppointmentEmail,
   sendPasswordResetEmail,
+  sendPasswordChangedEmail,
 } from './email.utils';
 import chalk from 'chalk';
 
@@ -25,5 +26,9 @@ export class EmailService {
     const code = generateVerificationCode();
     await sendPasswordResetEmail(to, code);
     return code;
+  }
+
+  async sendPasswordChanged(to: string): Promise<void> {
+    await sendPasswordChangedEmail(to);
   }
 }

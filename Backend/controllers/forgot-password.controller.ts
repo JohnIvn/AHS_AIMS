@@ -5,8 +5,9 @@ import { EmailService } from '../service/email/email.service';
 import * as bcrypt from 'bcrypt';
 
 console.log(
-  chalk.bgGreen.black('[CONTROLLER] Forgot Password controller loaded'),
+  chalk.bgGreen.black('[CONTROLLER]') + '  - Forgot Password controller loaded',
 );
+
 
 interface SendResetDto {
   email: string;

@@ -4,7 +4,10 @@ import * as bcrypt from 'bcrypt';
 import chalk from 'chalk';
 import { JwtService } from '@nestjs/jwt';
 
-console.log(chalk.bgGreen.black('[CONTROLLER] SignIn controller loaded'));
+console.log(
+  chalk.bgGreen.black('[CONTROLLER]') + '  - SignIn controller loaded',
+);
+
 
 interface SignInDto {
   email: string;

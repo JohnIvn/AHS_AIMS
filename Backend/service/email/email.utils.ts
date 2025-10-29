@@ -117,3 +117,33 @@ export async function sendPasswordResetEmail(
 
   await transporter.sendMail(mailOptions);
 }
+
+export async function sendPasswordChangedEmail(to: string): Promise<void> {
+  const transporter = nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false,
+    auth: {
+      user: process.env.MAIL_USER,
+      pass: process.env.MAIL_PASS,
+    },
+  });
+
+  const mailOptions = {
+    from: `"My App" <${process.env.MAIL_USER}>`,
+    to,
+    subject: 'Your password was changed',
+    text: 'This is a confirmation that your password was recently changed. If you did not make this change, please reset your password immediately or contact support.',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #333;">Password Changed</h2>
+        <p>
+          This is a confirmation that your password was recently changed.
+          If you did not make this change, please reset your password immediately or contact support.
+        </p>
+      </div>
+    `,
+  };
+
+  await transporter.sendMail(mailOptions);
+}

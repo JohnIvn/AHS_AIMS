@@ -6,7 +6,9 @@ import { JwtService } from '@nestjs/jwt';
 import { randomUUID } from 'crypto';
 import { EmailService } from '../service/email/email.service';
 
-console.log(chalk.bgGreen.black('[CONTROLLER] SignUp staff controller loaded'));
+console.log(
+  chalk.bgGreen.black('[CONTROLLER]') + '  - SignUp controller loaded',
+);
 
 interface SignUpDto {
   first_name: string;
