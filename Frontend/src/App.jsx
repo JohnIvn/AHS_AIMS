@@ -4,6 +4,8 @@ import SignIn from "./components/Auth/SignIn";
 import SignUpStaff from "./components/Auth/SignUpStaff";
 import ForgotPassword from "./components/Auth/ForgotPassword";
 import Home from "./components/Home/Home";
+import Appointments from "./components/Admin/Appointments";
+import Profile from "./components/Admin/Profile";
 
 function App() {
   const [tab, setTab] = useState("signin");
@@ -15,8 +17,10 @@ function App() {
 
   useEffect(() => {
     if (auth?.token) {
-      setTab("home");
-    } else if (tab === "home") {
+      if (tab === "signin" || tab === "signup" || tab === "forgot") {
+        setTab("home");
+      }
+    } else if (["home", "appointments", "profile"].includes(tab)) {
       setTab("signin");
     }
   }, [auth]);
@@ -28,10 +32,14 @@ function App() {
     setTab("signin");
   };
 
+  const handleUpdateUser = (nextUser) => {
+    setAuth((prev) => (prev ? { ...prev, user: nextUser } : prev));
+  };
+
   return (
     <div className="container">
       <header>
-        <h1>AHS AIMS Auth Demo</h1>
+        <h1>AHS AIMS</h1>
         {!auth?.token ? (
           <nav className="tabs">
             <button
@@ -48,12 +56,24 @@ function App() {
             </button>
           </nav>
         ) : (
-          <div className="tabs">
+          <div className="tabs" style={{ flexWrap: "wrap" }}>
             <button
               className={tab === "home" ? "active" : ""}
               onClick={() => setTab("home")}
             >
-              Home
+              Dashboard
+            </button>
+            <button
+              className={tab === "appointments" ? "active" : ""}
+              onClick={() => setTab("appointments")}
+            >
+              Appointments
+            </button>
+            <button
+              className={tab === "profile" ? "active" : ""}
+              onClick={() => setTab("profile")}
+            >
+              Profile
             </button>
             <button className="secondary" onClick={handleSignOut}>
               Sign Out
@@ -79,7 +99,17 @@ function App() {
           />
         )}
         {tab === "forgot" && <ForgotPassword onBack={() => setTab("signin")} />}
-        {tab === "home" && <Home user={auth?.user} onSignOut={handleSignOut} />}
+        {tab === "home" && (
+          <Home
+            user={auth?.user}
+            onSignOut={handleSignOut}
+            onNavigate={(t) => setTab(t)}
+          />
+        )}
+        {tab === "appointments" && <Appointments />}
+        {tab === "profile" && (
+          <Profile user={auth?.user} onUpdateUser={handleUpdateUser} />
+        )}
       </main>
     </div>
   );
