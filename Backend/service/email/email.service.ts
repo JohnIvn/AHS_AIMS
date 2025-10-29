@@ -5,6 +5,7 @@ import {
   sendAppointmentEmail,
   sendPasswordResetEmail,
   sendPasswordChangedEmail,
+  sendAppointmentDecisionEmail,
 } from './email.utils';
 import chalk from 'chalk';
 
@@ -30,5 +31,20 @@ export class EmailService {
 
   async sendPasswordChanged(to: string): Promise<void> {
     await sendPasswordChangedEmail(to);
+  }
+
+  async sendAppointmentDecision(
+    to: string,
+    details: {
+      status: 'accepted' | 'denied';
+      firstName?: string;
+      lastName?: string;
+      reason?: string;
+      date?: string;
+      time?: string;
+      notes?: string;
+    },
+  ): Promise<void> {
+    await sendAppointmentDecisionEmail(to, details);
   }
 }

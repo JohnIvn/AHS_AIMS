@@ -147,3 +147,72 @@ export async function sendPasswordChangedEmail(to: string): Promise<void> {
 
   await transporter.sendMail(mailOptions);
 }
+
+export async function sendAppointmentDecisionEmail(
+  to: string,
+  details: {
+    status: 'accepted' | 'denied';
+    firstName?: string;
+    lastName?: string;
+    reason?: string;
+    date?: string;
+    time?: string;
+    notes?: string;
+  },
+): Promise<void> {
+  const transporter = nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false,
+    auth: {
+      user: process.env.MAIL_USER,
+      pass: process.env.MAIL_PASS,
+    },
+  });
+
+  const subject =
+    details.status === 'accepted'
+      ? 'Your appointment request has been accepted'
+      : 'Your appointment request has been denied';
+
+  const fullName =
+    `${details.firstName || ''} ${details.lastName || ''}`.trim();
+  const reason = details.reason
+    ? `<li><strong>Reason:</strong> ${details.reason}</li>`
+    : '';
+  const date = details.date
+    ? `<li><strong>Date:</strong> ${details.date}</li>`
+    : '';
+  const time = details.time
+    ? `<li><strong>Time:</strong> ${details.time}</li>`
+    : '';
+  const notes = details.notes ? `<p>${details.notes}</p>` : '';
+
+  const friendly =
+    details.status === 'accepted'
+      ? 'We look forward to seeing you at your scheduled time.'
+      : 'Unfortunately, we are unable to accommodate your requested appointment. Please consider submitting a new request or contacting us for alternatives.';
+
+  const mailOptions = {
+    from: `"My App" <${process.env.MAIL_USER}>`,
+    to,
+    subject,
+    text: `${fullName ? `Hello ${fullName}, ` : 'Hello,'} Your appointment request has been ${details.status}. ${details.reason ? `Reason: ${details.reason}. ` : ''}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+        <h2 style="margin-bottom: 8px;">Appointment ${details.status === 'accepted' ? 'Accepted' : 'Denied'}</h2>
+        <p>${fullName ? `Hello ${fullName},` : 'Hello,'}</p>
+        <p>Your appointment request has been <strong>${details.status}</strong>.</p>
+        <ul>
+          ${date}
+          ${time}
+          ${reason}
+        </ul>
+        ${notes}
+        <p style="color: #666; font-size: 14px;">${friendly}</p>
+      </div>
+    `,
+  } as nodemailer.SendMailOptions;
+
+  await transporter.sendMail(mailOptions);
+}

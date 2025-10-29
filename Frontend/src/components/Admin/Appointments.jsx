@@ -143,7 +143,49 @@ export default function Appointments() {
         if (!res.ok) throw new Error(`Request failed: ${res.status}`);
         const json = await res.json();
         const rows = json?.data || [];
-        const mapped = mapRowsToItems(rows);
+        let mapped = mapRowsToItems(rows);
+
+        // Check which emails are already recorded in the database
+        const emails = Array.from(
+          new Set(
+            mapped.map((m) => (m.email || "").toLowerCase()).filter(Boolean)
+          )
+        );
+        if (emails.length > 0) {
+          try {
+            const chk = await fetch("/api/appointments/check", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ emails }),
+            });
+            if (chk.ok) {
+              const data = await chk.json();
+              const decidedSet = new Set(
+                (data.items || [])
+                  .filter((it) => it.decided)
+                  .map((it) => (it.email || "").toLowerCase())
+              );
+              const statusMap = (data.items || []).reduce((acc, it) => {
+                acc[(it.email || "").toLowerCase()] = it.status || "pending";
+                return acc;
+              }, {});
+              mapped = mapped.map((m) => {
+                const key = (m.email || "").toLowerCase();
+                const locked = decidedSet.has(key);
+                const dbStatus = statusMap[key];
+                // If DB says accepted/denied, reflect that; else keep sheet status
+                const statusOverride = ["accepted", "denied"].includes(
+                  (dbStatus || "").toLowerCase()
+                )
+                  ? (dbStatus || "").toLowerCase()
+                  : m.status;
+                return { ...m, locked, status: statusOverride };
+              });
+            }
+          } catch (e) {
+            console.warn("Check existing failed:", e?.message || e);
+          }
+        }
         setAllItems(mapped);
         // Apply current filters on fresh data
         const q = search.trim().toLowerCase();
@@ -220,6 +262,10 @@ export default function Appointments() {
 
   const handleDecision = async (item, decision) => {
     try {
+      if ((item.status || "").toLowerCase() !== "pending") {
+        setError(`This appointment is already ${item.status}.`);
+        return;
+      }
       if (!item.email) {
         setError("Email is required to record a decision.");
         return;
@@ -302,13 +348,12 @@ export default function Appointments() {
               <th align="left">Reason</th>
               <th align="left">Status</th>
               <th align="left">Actions</th>
-              {/* Actions removed in read-only mode */}
             </tr>
           </thead>
           <tbody>
             {items.length === 0 ? (
               <tr>
-                <td colSpan={6} style={{ padding: 12, textAlign: "center" }}>
+                <td colSpan={7} style={{ padding: 12, textAlign: "center" }}>
                   No appointments
                 </td>
               </tr>
@@ -341,24 +386,35 @@ export default function Appointments() {
                       </span>
                     </td>
                     <td>
-                      <div
-                        style={{ display: "flex", gap: 8, flexWrap: "wrap" }}
-                      >
-                        <button
-                          onClick={() => handleDecision(a, "accepted")}
-                          disabled={busyId === a.id || !a.email}
-                          style={{ padding: "6px 10px" }}
+                      {a.status === "pending" && !a.locked ? (
+                        <div
+                          style={{ display: "flex", gap: 8, flexWrap: "wrap" }}
                         >
-                          Accept
-                        </button>
-                        <button
-                          onClick={() => handleDecision(a, "denied")}
-                          disabled={busyId === a.id || !a.email}
-                          style={{ padding: "6px 10px", background: "#2a2f45" }}
-                        >
-                          Deny
-                        </button>
-                      </div>
+                          <button
+                            onClick={() => handleDecision(a, "accepted")}
+                            disabled={busyId === a.id || !a.email}
+                            style={{ padding: "6px 10px" }}
+                          >
+                            Accept
+                          </button>
+                          <button
+                            onClick={() => handleDecision(a, "denied")}
+                            disabled={busyId === a.id || !a.email}
+                            style={{
+                              padding: "6px 10px",
+                              background: "#2a2f45",
+                            }}
+                          >
+                            Deny
+                          </button>
+                        </div>
+                      ) : (
+                        <span style={{ color: "#9aa4bf", fontSize: 13 }}>
+                          {a.locked
+                            ? "Already recorded"
+                            : `Already ${a.status}`}
+                        </span>
+                      )}
                     </td>
                   </tr>
                 );
