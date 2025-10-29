@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-export default function SignUpStaff() {
+export default function SignUpStaff({ onSuccess }) {
   const [form, setForm] = useState({
     f_name: "",
     l_name: "",
@@ -101,7 +101,18 @@ export default function SignUpStaff() {
 
       if (data.success) {
         localStorage.setItem("token", data.token);
+        if (data.staff) {
+          localStorage.setItem(
+            "user",
+            JSON.stringify({
+              email: data.staff.email,
+              first_name: data.staff.first_name,
+              last_name: data.staff.last_name,
+            })
+          );
+        }
         setStaff(data.staff);
+        if (onSuccess) onSuccess(data.staff);
         pushMsg("success", "Account created successfully!");
       } else {
         pushMsg("error", data.message || "Sign up failed");

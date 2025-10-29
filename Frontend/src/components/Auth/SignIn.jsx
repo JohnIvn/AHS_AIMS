@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-export default function SignIn({ onForgot }) {
+export default function SignIn({ onForgot, onSuccess }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -22,7 +22,11 @@ export default function SignIn({ onForgot }) {
 
       if (data.success) {
         localStorage.setItem("token", data.token);
+        if (data.user) {
+          localStorage.setItem("user", JSON.stringify(data.user));
+        }
         setUser(data.user);
+        if (onSuccess) onSuccess(data.user);
         setMessage({ type: "success", text: "Signed in successfully." });
       } else {
         setMessage({ type: "error", text: data.message || "Sign in failed" });
