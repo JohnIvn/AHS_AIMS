@@ -21,8 +21,8 @@ export class GoogleFormsController {
       );
     }
 
-    console.log(`Using Sheet ID: ${sheetId}`);
-    console.log(`Using Range: ${range}`);
+    // console.log(`Using Sheet ID: ${sheetId}`);
+    // console.log(`Using Range: ${range}`);
 
     return await this.googleFormsService.getFormResponses(sheetId, range);
   }

@@ -1,36 +1,160 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  getAppointments,
-  updateStatus,
-  getStats,
-} from "../../services/appointments";
 
 export default function Appointments() {
   const [status, setStatus] = useState("pending");
   const [search, setSearch] = useState("");
+  const [allItems, setAllItems] = useState([]);
   const [items, setItems] = useState([]);
-  const [stats, setStats] = useState(getStats());
+  const [stats, setStats] = useState({
+    total: 0,
+    pending: 0,
+    accepted: 0,
+    denied: 0,
+    today: 0,
+  });
   const [error, setError] = useState("");
 
-  const refresh = () => {
-    setItems(getAppointments({ status, search }));
-    setStats(getStats());
+  // Map Google Sheets response rows to UI items
+  const mapRowsToItems = (rows = []) => {
+    const norm = (s) => (s || "").toString().trim();
+    const findKey = (obj, candidates) => {
+      const keys = Object.keys(obj);
+      const lcMap = keys.reduce((acc, k) => {
+        acc[k.toLowerCase()] = k;
+        return acc;
+      }, {});
+      for (const c of candidates) {
+        const key = lcMap[c.toLowerCase()];
+        if (key) return key;
+      }
+      return null;
+    };
+
+    return rows.map((row) => {
+      const firstKey = findKey(row, ["first_name", "firstname", "given_name"]);
+      const lastKey = findKey(row, ["last_name", "lastname", "family_name"]);
+      const nameKey = findKey(row, [
+        "patient_name",
+        "name",
+        "full_name",
+        "patient",
+      ]);
+      const reasonKey = findKey(row, ["reason", "purpose", "concern", "notes"]);
+      const statusKey = findKey(row, ["status", "appointment_status"]);
+      const dateKey = findKey(row, ["date", "appointment_date", "what_date"]);
+      const timeKey = findKey(row, ["time", "appointment_time"]);
+      const tsKey = findKey(row, ["timestamp", "created_at", "submitted_at"]);
+
+      let dt = null;
+      if (dateKey && timeKey) {
+        dt = new Date(`${norm(row[dateKey])} ${norm(row[timeKey])}`);
+      } else if (dateKey) {
+        dt = new Date(norm(row[dateKey]));
+      } else if (tsKey) {
+        dt = new Date(norm(row[tsKey]));
+      }
+
+      const dateTime =
+        dt && !isNaN(dt.getTime())
+          ? dt.toISOString()
+          : new Date().toISOString();
+
+      let patientName = "Unknown";
+      if (firstKey || lastKey) {
+        patientName =
+          `${firstKey ? norm(row[firstKey]) : ""} ${
+            lastKey ? norm(row[lastKey]) : ""
+          }`.trim() || "Unknown";
+      } else if (nameKey) {
+        patientName = norm(row[nameKey]) || "Unknown";
+      }
+
+      return {
+        id: row.id ?? `${norm(row[nameKey])}-${dateTime}`,
+        patientName,
+        dateTime,
+        reason: reasonKey ? norm(row[reasonKey]) : "",
+        status: statusKey ? norm(row[statusKey]).toLowerCase() : "pending",
+        createdAt: tsKey ? new Date(norm(row[tsKey])).toISOString() : dateTime,
+        updatedAt: dateTime,
+        raw: row,
+      };
+    });
+  };
+
+  const computeStats = (list) => {
+    const todayStr = new Date().toDateString();
+    const totals = {
+      total: list.length,
+      pending: 0,
+      accepted: 0,
+      denied: 0,
+      today: 0,
+    };
+    for (const a of list) {
+      if (a.status === "pending") totals.pending += 1;
+      else if (a.status === "accepted") totals.accepted += 1;
+      else if (a.status === "denied") totals.denied += 1;
+      if (new Date(a.dateTime).toDateString() === todayStr) totals.today += 1;
+    }
+    return totals;
+  };
+
+  const applyFilters = (source) => {
+    const q = search.trim().toLowerCase();
+    let result = [...source];
+    if (status && status !== "all") {
+      result = result.filter((a) => a.status === status);
+    }
+    if (q) {
+      result = result.filter(
+        (a) =>
+          a.patientName.toLowerCase().includes(q) ||
+          a.reason.toLowerCase().includes(q)
+      );
+    }
+    result.sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
+    setItems(result);
+    setStats(computeStats(source));
   };
 
   useEffect(() => {
-    refresh();
+    const fetchData = async () => {
+      try {
+        setError("");
+        const res = await fetch("/api/google-forms/responses");
+        if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+        const json = await res.json();
+        const rows = json?.data || [];
+        const mapped = mapRowsToItems(rows);
+        setAllItems(mapped);
+        // Apply current filters on fresh data
+        const q = search.trim().toLowerCase();
+        let filtered = [...mapped];
+        if (status && status !== "all")
+          filtered = filtered.filter((a) => a.status === status);
+        if (q)
+          filtered = filtered.filter(
+            (a) =>
+              a.patientName.toLowerCase().includes(q) ||
+              a.reason.toLowerCase().includes(q)
+          );
+        filtered.sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
+        setItems(filtered);
+        setStats(computeStats(mapped));
+      } catch (e) {
+        console.error(e);
+        setError(e.message || "Failed to load appointments");
+      }
+    };
+    fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status, search]);
+  }, []);
 
-  const onAction = (id, next) => {
-    try {
-      updateStatus(id, next);
-      refresh();
-      setError("");
-    } catch (e) {
-      setError(e.message || "Failed to update");
-    }
-  };
+  useEffect(() => {
+    applyFilters(allItems);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, search, allItems]);
 
   const counts = useMemo(
     () => [
@@ -88,7 +212,7 @@ export default function Appointments() {
               <th align="left">Patient</th>
               <th align="left">Reason</th>
               <th align="left">Status</th>
-              <th align="left">Actions</th>
+              {/* Actions removed in read-only mode */}
             </tr>
           </thead>
           <tbody>
@@ -113,31 +237,6 @@ export default function Appointments() {
                     <td>{a.patientName}</td>
                     <td>{a.reason}</td>
                     <td>{a.status}</td>
-                    <td style={{ display: "flex", gap: 8 }}>
-                      {a.status === "pending" ? (
-                        <>
-                          <button
-                            className="secondary"
-                            onClick={() => onAction(a.id, "accepted")}
-                          >
-                            Accept
-                          </button>
-                          <button
-                            className="secondary"
-                            onClick={() => onAction(a.id, "denied")}
-                          >
-                            Deny
-                          </button>
-                        </>
-                      ) : (
-                        <button
-                          className="secondary"
-                          onClick={() => onAction(a.id, "pending")}
-                        >
-                          Mark Pending
-                        </button>
-                      )}
-                    </td>
                   </tr>
                 );
               })

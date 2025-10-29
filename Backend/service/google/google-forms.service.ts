@@ -1,17 +1,40 @@
 import { Injectable } from '@nestjs/common';
 import { google } from 'googleapis';
 import * as path from 'path';
+import * as fs from 'fs';
 import chalk from 'chalk';
 
-console.log(chalk.bgBlue.black('[SERVICE]') + '     - Google Sheets service loaded');
+console.log(
+  chalk.bgBlue.black('[SERVICE]') + '     - Google Sheets service loaded',
+);
 
 @Injectable()
 export class GoogleFormsService {
   private sheets;
 
   constructor() {
+    const candidates = [
+      path.resolve(__dirname, '../../../key.json'),
+      path.resolve(process.cwd(), 'Backend', 'key.json'),
+      path.resolve(process.cwd(), 'backend', 'key.json'),
+      path.resolve(process.cwd(), 'key.json'),
+    ];
+    const keyFile = candidates.find((p) => {
+      try {
+        return fs.existsSync(p);
+      } catch {
+        return false;
+      }
+    });
+
+    if (!keyFile) {
+      throw new Error(
+        `Google service account key.json not found. Looked in: \n${candidates.join('\n')}`,
+      );
+    }
+
     const auth = new google.auth.GoogleAuth({
-      keyFile: path.join(__dirname, '../../key.json'),
+      keyFile,
       scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
     });
 
