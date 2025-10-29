@@ -1,5 +1,5 @@
 import { Body, Controller, Post } from '@nestjs/common';
-import { DatabaseService } from '../service/database/database.service';
+import { PrismaService } from 'service/prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import chalk from 'chalk';
 import { JwtService } from '@nestjs/jwt';
@@ -21,36 +21,19 @@ interface User {
 @Controller('auth')
 export class SignInController {
   constructor(
-    private readonly dbService: DatabaseService,
+    private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
   ) {}
 
   @Post('signin')
   async signIn(@Body() body: SignInDto) {
-    const client = this.dbService.getClient();
-
     try {
-      let result = await client.query(
-        'SELECT * FROM staff_account WHERE email = $1',
-        [body.email],
-      );
+      const found = await this.prisma.staff_account.findUnique({
+        where: { email: body.email },
+      });
 
-      let role = 'user';
-      let user: User | null = null;
-
-      if (result.rows.length > 0) {
-        user = result.rows[0];
-      } else {
-        result = await client.query(
-          'SELECT * FROM staff_account WHERE email = $1',
-          [body.email],
-        );
-        if (result.rows.length === 0) {
-          return { success: false, message: 'User not found' };
-        }
-        user = result.rows[0];
-        role = 'staff';
-      }
+      let role = 'staff';
+      const user = found as unknown as User | null;
 
       if (!user) {
         return { success: false, message: 'User not found' };

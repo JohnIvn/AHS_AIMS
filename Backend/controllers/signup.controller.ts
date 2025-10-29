@@ -1,5 +1,5 @@
 import { Body, Controller, Post } from '@nestjs/common';
-import { DatabaseService } from '../service/database/database.service';
+import { PrismaService } from 'service/prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import chalk from 'chalk';
 import { JwtService } from '@nestjs/jwt';
@@ -20,28 +20,23 @@ interface SignUpDto {
 @Controller('auth')
 export class SignUpStaffController {
   constructor(
-    private readonly dbService: DatabaseService,
+    private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly emailService: EmailService,
   ) {}
 
   @Post('check-email-staff')
   async checkEmail(@Body() body: { email: string }) {
-    const client = this.dbService.getClient();
-
     try {
-      const result = await client.query(
-        'SELECT email FROM staff_account WHERE email = $1',
-        [body.email],
-      );
+      const existing = await this.prisma.staff_account.findUnique({
+        where: { email: body.email },
+        select: { email: true },
+      });
 
       return {
         success: true,
-        isAvailable: result.rows.length === 0,
-        message:
-          result.rows.length > 0
-            ? 'Email already registered'
-            : 'Email available',
+        isAvailable: !existing,
+        message: existing ? 'Email already registered' : 'Email available',
       };
     } catch (error) {
       console.error(chalk.red('[ERROR] Checking email:'), error);
@@ -51,21 +46,18 @@ export class SignUpStaffController {
 
   @Post('check-phone-staff')
   async checkPhone(@Body() body: { contact_number: string }) {
-    const client = this.dbService.getClient();
-
     try {
-      const result = await client.query(
-        'SELECT contact_number FROM staff_account WHERE contact_number = $1',
-        [body.contact_number],
-      );
+      const existing = await this.prisma.staff_account.findFirst({
+        where: { contact_number: body.contact_number || undefined },
+        select: { contact_number: true },
+      });
 
       return {
         success: true,
-        isAvailable: result.rows.length === 0,
-        message:
-          result.rows.length > 0
-            ? 'Phone number already registered'
-            : 'Phone number available',
+        isAvailable: !existing,
+        message: existing
+          ? 'Phone number already registered'
+          : 'Phone number available',
       };
     } catch (error) {
       console.error(chalk.red('[ERROR] Checking phone:'), error);
@@ -78,17 +70,15 @@ export class SignUpStaffController {
 
   @Post('send-verification-staff')
   async sendVerification(@Body() body: { email: string }) {
-    const client = this.dbService.getClient();
-
     try {
       await this.cleanupExpiredCodes();
 
-      const existingStaff = await client.query(
-        'SELECT staff_id FROM staff_account WHERE email = $1',
-        [body.email],
-      );
+      const existingStaff = await this.prisma.staff_account.findUnique({
+        where: { email: body.email },
+        select: { staff_id: true },
+      });
 
-      if (existingStaff.rows.length > 0) {
+      if (existingStaff) {
         return {
           success: false,
           message:
@@ -100,25 +90,33 @@ export class SignUpStaffController {
 
       const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-      const existingCode = await client.query(
-        'SELECT id FROM verification_code WHERE email = $1',
-        [body.email],
-      );
+      const latest = await this.prisma.verification_code.findFirst({
+        where: { email: body.email },
+        orderBy: { created_at: 'desc' },
+        select: { id: true },
+      });
 
-      if (existingCode.rows.length > 0) {
-        await client.query(
-          `UPDATE verification_code 
-           SET code = $1, expires_at = $2, created_at = CURRENT_TIMESTAMP
-           WHERE email = $3`,
-          [code, expiresAt, body.email],
-        );
+      if (latest) {
+        await this.prisma.verification_code.update({
+          where: { id: latest.id },
+          data: {
+            code,
+            expires_at: expiresAt,
+            created_at: new Date(),
+            used: false,
+          },
+        });
       } else {
-        const id = randomUUID();
-        await client.query(
-          `INSERT INTO verification_code (id, email, code, created_at, expires_at, used)
-           VALUES ($1, $2, $3, CURRENT_TIMESTAMP, $4, false)`,
-          [id, body.email, code, expiresAt],
-        );
+        await this.prisma.verification_code.create({
+          data: {
+            id: randomUUID(),
+            email: body.email,
+            code,
+            created_at: new Date(),
+            expires_at: expiresAt,
+            used: false,
+          },
+        });
       }
 
       return { success: true, message: 'Verification code sent to your email' };
@@ -130,8 +128,6 @@ export class SignUpStaffController {
 
   @Post('signupst')
   async signUp(@Body() body: SignUpDto) {
-    const client = this.dbService.getClient();
-
     try {
       if (!body.contact_number || body.contact_number.trim() === '') {
         return {
@@ -149,58 +145,54 @@ export class SignUpStaffController {
 
       await this.cleanupExpiredCodes();
 
-      const codeResult = await client.query(
-        `SELECT code, expires_at FROM verification_code 
-         WHERE email = $1 
-         ORDER BY created_at DESC
-         LIMIT 1`,
-        [body.email],
-      );
+      const latestCode = await this.prisma.verification_code.findFirst({
+        where: { email: body.email },
+        orderBy: { created_at: 'desc' },
+        select: { code: true, expires_at: true, id: true },
+      });
 
-      if (codeResult.rows.length === 0) {
+      if (!latestCode) {
         return {
           success: false,
           message: 'No verification code found. Please request a new one.',
         };
       }
 
-      const storedCode = codeResult.rows[0];
-
-      if (new Date() > new Date(storedCode.expires_at)) {
-        await client.query('DELETE FROM verification_code WHERE email = $1', [
-          body.email,
-        ]);
+      if (new Date() > new Date(latestCode.expires_at)) {
+        await this.prisma.verification_code.deleteMany({
+          where: { email: body.email },
+        });
         return {
           success: false,
           message: 'Verification code has expired. Please request a new one.',
         };
       }
 
-      if (storedCode.code !== body.verificationCode) {
+      if (latestCode.code !== body.verificationCode) {
         return {
           success: false,
           message: 'Invalid verification code',
         };
       }
 
-      const emailCheck = await client.query(
-        'SELECT staff_id FROM staff_account WHERE email = $1',
-        [body.email],
-      );
+      const emailCheck = await this.prisma.staff_account.findUnique({
+        where: { email: body.email },
+        select: { staff_id: true },
+      });
 
-      if (emailCheck.rows.length > 0) {
+      if (emailCheck) {
         return {
           success: false,
           message: 'This email is already registered. Please sign in instead.',
         };
       }
 
-      const phoneCheck = await client.query(
-        'SELECT staff_id FROM staff_account WHERE contact_number = $1',
-        [body.contact_number],
-      );
+      const phoneCheck = await this.prisma.staff_account.findFirst({
+        where: { contact_number: body.contact_number },
+        select: { staff_id: true },
+      });
 
-      if (phoneCheck.rows.length > 0) {
+      if (phoneCheck) {
         return {
           success: false,
           message:
@@ -213,28 +205,27 @@ export class SignUpStaffController {
       const firstName = (body as any).first_name ?? (body as any).f_name;
       const lastName = (body as any).last_name ?? (body as any).l_name;
 
-      const result = await client.query(
-        `
-        INSERT INTO staff_account
-          (staff_id, first_name, last_name, contact_number, email, password)
-          VALUES ($1, $2, $3, $4, $5, $6)
-        RETURNING staff_id, email, first_name, last_name, contact_number
-        `,
-        [
-          staffId,
-          firstName,
-          lastName,
-          body.contact_number,
-          body.email,
-          hashedPassword,
-        ],
-      );
+      const staff = await this.prisma.staff_account.create({
+        data: {
+          staff_id: staffId,
+          first_name: firstName,
+          last_name: lastName,
+          contact_number: body.contact_number,
+          email: body.email,
+          password: hashedPassword,
+        },
+        select: {
+          staff_id: true,
+          email: true,
+          first_name: true,
+          last_name: true,
+          contact_number: true,
+        },
+      });
 
-      const staff = result.rows[0];
-
-      await client.query('DELETE FROM verification_code WHERE email = $1', [
-        body.email,
-      ]);
+      await this.prisma.verification_code.deleteMany({
+        where: { email: body.email },
+      });
 
       const payload = { email: staff.email, role: 'staff' };
       const token = this.jwtService.sign(payload, { expiresIn: '1h' });
@@ -243,14 +234,20 @@ export class SignUpStaffController {
     } catch (error: any) {
       console.error(chalk.red('[ERROR]'), error);
 
-      if (error.code === '23505') {
-        if (error.detail?.includes('(email)')) {
+      // Handle Prisma unique constraint errors
+      if (error.code === 'P2002') {
+        const target = (error.meta?.target || []) as string[];
+        if (
+          target.includes('staff_account_email_key') ||
+          target.includes('email')
+        ) {
           return {
             success: false,
             message:
               'This email is already registered. Please sign in instead.',
           };
-        } else if (error.detail?.includes('(contact_number)')) {
+        }
+        if (target.includes('contact_number')) {
           return {
             success: false,
             message:
@@ -267,11 +264,10 @@ export class SignUpStaffController {
   }
 
   private async cleanupExpiredCodes() {
-    const client = this.dbService.getClient();
     try {
-      await client.query(
-        'DELETE FROM verification_code WHERE expires_at < CURRENT_TIMESTAMP',
-      );
+      await this.prisma.verification_code.deleteMany({
+        where: { expires_at: { lt: new Date() } },
+      });
     } catch (error) {
       console.error(chalk.red('[ERROR] Cleaning expired codes:'), error);
     }

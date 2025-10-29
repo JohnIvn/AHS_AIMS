@@ -5,6 +5,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { DatabaseService } from 'service/database/database.service';
 import { GoogleFormsService } from '../service/google/google-forms.service';
 import { EmailService } from '../service/email/email.service';
+import { PrismaService } from 'service/prisma/prisma.service';
 
 import { GoogleFormsController } from '../controllers/google-forms.controller';
 import { SignInController } from '../controllers/signin.controller';
@@ -22,6 +23,6 @@ import { SignUpStaffController } from '../controllers/signup.controller';
     }),
   ],
   controllers: [GoogleFormsController, SignInController, SignUpStaffController],
-  providers: [GoogleFormsService, EmailService, DatabaseService],
+  providers: [GoogleFormsService, EmailService, DatabaseService, PrismaService],
 })
 export class AppModule {}
