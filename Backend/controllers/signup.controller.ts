@@ -150,6 +150,15 @@ export class SignUpStaffController {
         };
       }
 
+      const hasLetters = /[A-Za-z]/.test(body.password || '');
+      const hasDigits = /\d/.test(body.password || '');
+      if (!(hasLetters && hasDigits)) {
+        return {
+          success: false,
+          message: 'Password must include letters and numbers',
+        };
+      }
+
       if (!body.contact_number || body.contact_number.trim() === '') {
         return {
           success: false,

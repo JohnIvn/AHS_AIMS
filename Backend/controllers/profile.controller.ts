@@ -114,6 +114,15 @@ export class ProfileController {
       };
     }
 
+    const hasLetters = /[A-Za-z]/.test(body.new_password || '');
+    const hasDigits = /\d/.test(body.new_password || '');
+    if (!(hasLetters && hasDigits)) {
+      return {
+        success: false,
+        message: 'New password must include letters and numbers',
+      };
+    }
+
     try {
       const account = await this.prisma.staff_account.findUnique({
         where: { email },

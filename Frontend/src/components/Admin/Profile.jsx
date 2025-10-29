@@ -638,6 +638,15 @@ export default function Profile({ user, onUpdateUser }) {
                   setFgError("New password must be at least 8 characters");
                   return;
                 }
+                if (
+                  !(
+                    /[A-Za-z]/.test(fg.new_password) &&
+                    /\d/.test(fg.new_password)
+                  )
+                ) {
+                  setFgError("New password must include letters and numbers");
+                  return;
+                }
                 try {
                   setFgLoading(true);
                   setFgError("");

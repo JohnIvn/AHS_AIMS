@@ -8,7 +8,6 @@ console.log(
   chalk.bgGreen.black('[CONTROLLER]') + '  - Forgot Password controller loaded',
 );
 
-
 interface SendResetDto {
   email: string;
 }
@@ -104,6 +103,21 @@ export class ForgotPasswordController {
   async resetPassword(@Body() body: ResetPasswordDto) {
     try {
       await this.cleanupExpiredCodes();
+
+      if (!body.newPassword || body.newPassword.length < 8) {
+        return {
+          success: false,
+          message: 'Password must be at least 8 characters',
+        };
+      }
+      const hasLetters = /[A-Za-z]/.test(body.newPassword || '');
+      const hasDigits = /\d/.test(body.newPassword || '');
+      if (!(hasLetters && hasDigits)) {
+        return {
+          success: false,
+          message: 'Password must include letters and numbers',
+        };
+      }
 
       const latest = await this.prisma.verification_code.findFirst({
         where: { email: body.email },

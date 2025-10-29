@@ -9,6 +9,24 @@ export default function ForgotPassword({ onBack }) {
   const [message, setMessage] = useState(null);
   const [showPwd, setShowPwd] = useState(false);
 
+  const passwordStrength = (value) => {
+    let score = 0;
+    if (!value) return { label: "", score };
+    if (value.length >= 8) score += 1;
+    if (/[a-z]/.test(value) && /[A-Z]/.test(value)) score += 1;
+    if (/\d/.test(value)) score += 1;
+    if (/[^A-Za-z0-9]/.test(value)) score += 1;
+    const label =
+      score <= 1
+        ? "Weak"
+        : score === 2
+        ? "Fair"
+        : score === 3
+        ? "Good"
+        : "Strong";
+    return { label, score };
+  };
+
   const sendCode = async () => {
     setLoading(true);
     setMessage(null);
@@ -40,6 +58,28 @@ export default function ForgotPassword({ onBack }) {
 
   const resetPassword = async (e) => {
     e.preventDefault();
+    // Base validation copied from SignUpStaff.jsx: min 8, letters and numbers
+    const baseValid =
+      typeof newPassword === "string" &&
+      newPassword.length >= 8 &&
+      /[A-Za-z]/.test(newPassword) &&
+      /\d/.test(newPassword);
+    if (!baseValid) {
+      setMessage({
+        type: "error",
+        text: "Min 8 chars, include letters and numbers.",
+      });
+      return;
+    }
+    // Additional business rule: require Good or Strong strength
+    const { score } = passwordStrength(newPassword);
+    if (score < 3) {
+      setMessage({
+        type: "error",
+        text: "Password strength must be Good or Strong.",
+      });
+      return;
+    }
     setLoading(true);
     setMessage(null);
     try {
@@ -137,10 +177,40 @@ export default function ForgotPassword({ onBack }) {
                 {showPwd ? "Hide" : "Show"}
               </button>
             </div>
+            <div style={{ fontSize: 12, color: "#666" }}>
+              Min 8 chars, include letters and numbers
+            </div>
+            {newPassword && (
+              <div
+                style={{
+                  fontSize: 12,
+                  color:
+                    passwordStrength(newPassword).score >= 3
+                      ? "#2a7"
+                      : passwordStrength(newPassword).score === 2
+                      ? "#c77d00"
+                      : "#b33",
+                }}
+              >
+                Strength: {passwordStrength(newPassword).label}
+              </div>
+            )}
           </label>
 
           <div className="inline">
-            <button type="submit" disabled={loading}>
+            <button
+              type="submit"
+              disabled={
+                loading ||
+                !(
+                  newPassword &&
+                  newPassword.length >= 8 &&
+                  /[A-Za-z]/.test(newPassword) &&
+                  /\d/.test(newPassword) &&
+                  passwordStrength(newPassword).score >= 3
+                )
+              }
+            >
               {loading ? "Resetting…" : "Reset password"}
             </button>
             <button type="button" className="secondary" onClick={onBack}>
