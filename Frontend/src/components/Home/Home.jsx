@@ -12,6 +12,7 @@ export default function Home({ user, onSignOut, onNavigate }) {
     today: 0,
   });
   const [recent, setRecent] = useState([]);
+  const [todayAppointments, setTodayAppointments] = useState([]);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -109,7 +110,9 @@ export default function Home({ user, onSignOut, onNavigate }) {
         if (a.status === "pending") totals.pending += 1;
         else if (a.status === "accepted") totals.accepted += 1;
         else if (a.status === "denied") totals.denied += 1;
-        if (new Date(a.dateTime).toDateString() === todayStr) totals.today += 1;
+        // Today counts submissions (createdAt), not appointment dates
+        if (new Date(a.createdAt).toDateString() === todayStr)
+          totals.today += 1;
       }
       return totals;
     };
@@ -160,6 +163,13 @@ export default function Home({ user, onSignOut, onNavigate }) {
           .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
           .slice(0, 5);
         setRecent(recentItems);
+
+        // appointments scheduled for today (by appointment dateTime)
+        const todayStr = new Date().toDateString();
+        const todays = mapped
+          .filter((a) => new Date(a.dateTime).toDateString() === todayStr)
+          .sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
+        setTodayAppointments(todays);
         setStats(computeStats(mapped));
       } catch (e) {
         console.error(e);
@@ -202,8 +212,8 @@ export default function Home({ user, onSignOut, onNavigate }) {
           marginTop: 12,
         }}
       >
-        <StatCard label="Total" value={stats.total} />
-        <StatCard label="Today" value={stats.today} />
+  <StatCard label="Total" value={stats.total} />
+  <StatCard label="Today (submissions)" value={stats.today} />
         <StatCard label="Pending" value={stats.pending} />
         <StatCard label="Accepted" value={stats.accepted} />
         <StatCard label="Denied" value={stats.denied} />
@@ -216,6 +226,49 @@ export default function Home({ user, onSignOut, onNavigate }) {
       )}
 
       <div className="result" style={{ marginTop: 16 }}>
+        <h4>Appointments Today</h4>
+        {todayAppointments.length === 0 ? (
+          <div>No appointments today</div>
+        ) : (
+          <div className="table-wrapper">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th align="left">Time</th>
+                  <th align="left">Name</th>
+                  <th align="left">Reason</th>
+                  <th align="left">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {todayAppointments.map((a) => {
+                  const d = new Date(a.dateTime);
+                  const timeStr = d.toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  });
+                  return (
+                    <tr key={a.id}>
+                      <td>{timeStr}</td>
+                      <td>{a.patientName}</td>
+                      <td className="truncate" title={a.reason}>
+                        {a.reason}
+                      </td>
+                      <td>
+                        <span className={`status-badge status-${a.status}`}>
+                          {a.status}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        <div style={{ height: 12 }} />
+
         <h4>Recent Appointments</h4>
         {recent.length === 0 ? (
           <div>No recent items</div>

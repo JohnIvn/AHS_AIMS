@@ -111,7 +111,7 @@ export default function Stats() {
   }, []);
 
   const { totals, daily, byDateBreakdown, recentSubmissions } = useMemo(() => {
-    const totals = { total: 0, pending: 0, accepted: 0, denied: 0, today: 0 };
+  const totals = { total: 0, pending: 0, accepted: 0, denied: 0, today: 0 };
     const byDay = new Map();
     const breakdown = new Map(); // date -> {total,pending,accepted,denied,earliest,latest}
     const todayStr = new Date().toDateString();
@@ -120,7 +120,8 @@ export default function Stats() {
       if (r.status === "accepted") totals.accepted += 1;
       else if (r.status === "denied") totals.denied += 1;
       else totals.pending += 1;
-      if (r.dateTime && r.dateTime.toDateString() === todayStr)
+      // Today counts submissions (submittedAt), not appointment dates
+      if (r.submittedAt && r.submittedAt.toDateString() === todayStr)
         totals.today += 1;
       const key = r.dateTime
         ? r.dateTime.toISOString().slice(0, 10)
@@ -202,7 +203,7 @@ export default function Stats() {
         <>
           <div className="grid" style={{ marginTop: 8 }}>
             <StatTile label="Total" value={totals.total} />
-            <StatTile label="Today" value={totals.today} />
+            <StatTile label="Today (submissions)" value={totals.today} />
             <StatTile label="Pending" value={totals.pending} />
             <StatTile label="Accepted" value={totals.accepted} />
             <StatTile label="Denied" value={totals.denied} />

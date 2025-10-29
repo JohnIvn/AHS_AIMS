@@ -32,10 +32,10 @@ export class DatabaseService implements OnModuleInit {
   }
 
   async onModuleInit() {
-    console.log(chalk.yellow('[SUPABASE]    - ') + ' Connecting to the database...');
+    console.log(chalk.yellow('[SUPABASE]    -') + ' Connecting to the database...');
 
     await this.client.connect();
-    console.log(chalk.green('[SUPABASE]    - ') + ' Connected to the database!');
+    console.log(chalk.green('[SUPABASE]    -') + ' Connected to the database!');
   }
 
   getClient(): Client {
