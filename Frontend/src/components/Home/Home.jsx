@@ -30,17 +30,36 @@ export default function Home({ user, onSignOut, onNavigate }) {
 
   return (
     <div className="auth-card">
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 12,
+        }}
+      >
         <h2>Welcome{name ? `, ${name}` : ""}!</h2>
         <div style={{ display: "flex", gap: 8 }}>
-          <button className="secondary" onClick={() => onNavigate && onNavigate("appointments")}>
+          <button
+            className="secondary"
+            onClick={() => onNavigate && onNavigate("appointments")}
+          >
             Manage Appointments
           </button>
-          <button className="secondary" onClick={onSignOut}>Sign Out</button>
+          <button className="secondary" onClick={onSignOut}>
+            Sign Out
+          </button>
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginTop: 12 }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+          gap: 12,
+          marginTop: 12,
+        }}
+      >
         <StatCard label="Total" value={stats.total} />
         <StatCard label="Today" value={stats.today} />
         <StatCard label="Pending" value={stats.pending} />
@@ -59,26 +78,64 @@ export default function Home({ user, onSignOut, onNavigate }) {
         {recent.length === 0 ? (
           <div>No recent items</div>
         ) : (
-          <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 8 }}>
+          <ul
+            style={{
+              listStyle: "none",
+              padding: 0,
+              margin: 0,
+              display: "grid",
+              gap: 8,
+            }}
+          >
             {recent.map((a) => {
               const d = new Date(a.dateTime);
               const dateStr = d.toLocaleDateString();
-              const timeStr = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+              const timeStr = d.toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              });
               return (
-                <li key={a.id} style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center" }}>
+                <li
+                  key={a.id}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    gap: 8,
+                    alignItems: "center",
+                  }}
+                >
                   <div>
                     <div style={{ fontWeight: 600 }}>{a.patientName}</div>
-                    <div style={{ fontSize: 12, color: "#666" }}>{dateStr} • {timeStr} • {a.reason}</div>
+                    <div style={{ fontSize: 12, color: "#666" }}>
+                      {dateStr} • {timeStr} • {a.reason}
+                    </div>
                   </div>
-                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                    <span style={{ fontSize: 12, color: "#555" }}>{a.status}</span>
+                  <div
+                    style={{ display: "flex", gap: 8, alignItems: "center" }}
+                  >
+                    <span style={{ fontSize: 12, color: "#555" }}>
+                      {a.status}
+                    </span>
                     {a.status === "pending" ? (
                       <>
-                        <button className="secondary" onClick={() => onAction(a.id, "accepted")}>Accept</button>
-                        <button className="secondary" onClick={() => onAction(a.id, "denied")}>Deny</button>
+                        <button
+                          className="secondary"
+                          onClick={() => onAction(a.id, "accepted")}
+                        >
+                          Accept
+                        </button>
+                        <button
+                          className="secondary"
+                          onClick={() => onAction(a.id, "denied")}
+                        >
+                          Deny
+                        </button>
                       </>
                     ) : (
-                      <button className="secondary" onClick={() => onAction(a.id, "pending")}>
+                      <button
+                        className="secondary"
+                        onClick={() => onAction(a.id, "pending")}
+                      >
                         Mark Pending
                       </button>
                     )}

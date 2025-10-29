@@ -48,7 +48,12 @@ function seedMockDataIfEmpty() {
     const daysOffset = Math.floor(Math.random() * 15) - 5; // some in past, some in future
     const date = new Date(now);
     date.setDate(now.getDate() + daysOffset);
-    date.setHours(9 + Math.floor(Math.random() * 8), [0, 15, 30, 45][Math.floor(Math.random() * 4)], 0, 0);
+    date.setHours(
+      9 + Math.floor(Math.random() * 8),
+      [0, 15, 30, 45][Math.floor(Math.random() * 4)],
+      0,
+      0
+    );
 
     const statusPool = ["pending", "pending", "pending", "accepted", "denied"]; // skew to pending
     const status = randomFrom(statusPool);

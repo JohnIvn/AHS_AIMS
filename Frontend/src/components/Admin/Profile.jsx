@@ -39,7 +39,11 @@ export default function Profile({ user, onUpdateUser }) {
       <div className="form-grid" style={{ display: "grid", gap: 12 }}>
         <label>
           <div>First Name</div>
-          <input name="first_name" value={form.first_name} onChange={onChange} />
+          <input
+            name="first_name"
+            value={form.first_name}
+            onChange={onChange}
+          />
         </label>
         <label>
           <div>Last Name</div>
@@ -47,7 +51,12 @@ export default function Profile({ user, onUpdateUser }) {
         </label>
         <label>
           <div>Email</div>
-          <input name="email" type="email" value={form.email} onChange={onChange} />
+          <input
+            name="email"
+            type="email"
+            value={form.email}
+            onChange={onChange}
+          />
         </label>
         <label>
           <div>Phone</div>
@@ -56,7 +65,9 @@ export default function Profile({ user, onUpdateUser }) {
       </div>
       <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
         <button onClick={onSave}>Save</button>
-        {saved && <span style={{ alignSelf: "center", color: "#2a7" }}>Saved ✓</span>}
+        {saved && (
+          <span style={{ alignSelf: "center", color: "#2a7" }}>Saved ✓</span>
+        )}
       </div>
       {user && (
         <div className="result" style={{ marginTop: 16 }}>

@@ -44,7 +44,14 @@ export default function Appointments() {
 
   return (
     <div className="auth-card">
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          gap: 12,
+          alignItems: "center",
+        }}
+      >
         <h2>Appointments</h2>
         <input
           placeholder="Search by name or reason"
@@ -95,7 +102,10 @@ export default function Appointments() {
               items.map((a) => {
                 const date = new Date(a.dateTime);
                 const dateStr = date.toLocaleDateString();
-                const timeStr = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+                const timeStr = date.toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                });
                 return (
                   <tr key={a.id} style={{ borderTop: "1px solid #eee" }}>
                     <td>{dateStr}</td>
@@ -106,11 +116,24 @@ export default function Appointments() {
                     <td style={{ display: "flex", gap: 8 }}>
                       {a.status === "pending" ? (
                         <>
-                          <button className="secondary" onClick={() => onAction(a.id, "accepted")}>Accept</button>
-                          <button className="secondary" onClick={() => onAction(a.id, "denied")}>Deny</button>
+                          <button
+                            className="secondary"
+                            onClick={() => onAction(a.id, "accepted")}
+                          >
+                            Accept
+                          </button>
+                          <button
+                            className="secondary"
+                            onClick={() => onAction(a.id, "denied")}
+                          >
+                            Deny
+                          </button>
                         </>
                       ) : (
-                        <button className="secondary" onClick={() => onAction(a.id, "pending")}>
+                        <button
+                          className="secondary"
+                          onClick={() => onAction(a.id, "pending")}
+                        >
                           Mark Pending
                         </button>
                       )}
