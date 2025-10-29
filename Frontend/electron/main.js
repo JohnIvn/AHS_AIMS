@@ -19,15 +19,35 @@ function createWindow() {
       preload: join(__dirname, "preload.js"),
       nodeIntegration: false,
       contextIsolation: true,
+      devTools: false,
     },
   });
 
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL);
-    win.webContents.openDevTools();
   } else {
     win.loadFile(join(__dirname, "../dist/index.html"));
   }
+
+  win.webContents.on("before-input-event", (event, input) => {
+    const key = (input.key || "").toString();
+    const isCtrlShiftI =
+      input.control && input.shift && key.toLowerCase() === "i";
+    const isCtrlShiftC =
+      input.control && input.shift && key.toLowerCase() === "c";
+    const isF12 = key === "F12";
+    if (isCtrlShiftI || isCtrlShiftC || isF12) {
+      event.preventDefault();
+    }
+  });
+
+  win.webContents.on("devtools-opened", () => {
+    win.webContents.closeDevTools();
+  });
+
+  win.webContents.on("context-menu", (e) => {
+    e.preventDefault();
+  });
 }
 
 app.whenReady().then(createWindow);
