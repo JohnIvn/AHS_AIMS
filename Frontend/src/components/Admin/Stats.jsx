@@ -111,7 +111,7 @@ export default function Stats() {
   }, []);
 
   const { totals, daily, byDateBreakdown, recentSubmissions } = useMemo(() => {
-  const totals = { total: 0, pending: 0, accepted: 0, denied: 0, today: 0 };
+    const totals = { total: 0, pending: 0, accepted: 0, denied: 0, today: 0 };
     const byDay = new Map();
     const breakdown = new Map(); // date -> {total,pending,accepted,denied,earliest,latest}
     const todayStr = new Date().toDateString();

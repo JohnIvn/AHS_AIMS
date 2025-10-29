@@ -112,8 +112,7 @@ export default function Appointments() {
       else if (a.status === "accepted") totals.accepted += 1;
       else if (a.status === "denied") totals.denied += 1;
       // Today counts submissions (createdAt), not appointment dates
-      if (new Date(a.createdAt).toDateString() === todayStr)
-        totals.today += 1;
+      if (new Date(a.createdAt).toDateString() === todayStr) totals.today += 1;
     }
     return totals;
   };

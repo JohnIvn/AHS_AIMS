@@ -212,8 +212,8 @@ export default function Home({ user, onSignOut, onNavigate }) {
           marginTop: 12,
         }}
       >
-  <StatCard label="Total" value={stats.total} />
-  <StatCard label="Today (submissions)" value={stats.today} />
+        <StatCard label="Total" value={stats.total} />
+        <StatCard label="Today (submissions)" value={stats.today} />
         <StatCard label="Pending" value={stats.pending} />
         <StatCard label="Accepted" value={stats.accepted} />
         <StatCard label="Denied" value={stats.denied} />
