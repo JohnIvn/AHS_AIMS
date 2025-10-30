@@ -37,3 +37,14 @@ model verification_code {
   expires_at  DateTime
   used        Boolean  @default(false)
 }
+
+model admin_account {
+  admin_id       String   @id @default(uuid())
+  first_name     String
+  last_name      String
+  contact_number String?
+  email          String   @unique
+  password       String
+  date_created   DateTime @default(now())
+  status         String   @default("active")
+}
