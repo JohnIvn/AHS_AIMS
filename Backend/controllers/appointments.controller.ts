@@ -4,6 +4,8 @@ import {
   Controller,
   HttpCode,
   Post,
+  Get,
+  Query,
 } from '@nestjs/common';
 import chalk from 'chalk';
 import { PrismaService } from 'service/prisma/prisma.service';
@@ -28,6 +30,92 @@ export class AppointmentsController {
     private readonly prisma: PrismaService,
     private readonly emailService: EmailService,
   ) {}
+
+  @Get('calendar')
+  async getCalendar(
+    @Query('start') start?: string,
+    @Query('end') end?: string,
+  ) {
+    // parse range; default to last 30 days
+    let startDate: Date;
+    let endDate: Date;
+    const now = new Date();
+    if (start) {
+      const d = new Date(start);
+      if (isNaN(d.getTime())) {
+        throw new BadRequestException('Invalid start date');
+      }
+      startDate = d;
+    } else {
+      startDate = new Date(now);
+      startDate.setDate(startDate.getDate() - 30);
+    }
+
+    if (end) {
+      const d = new Date(end);
+      if (isNaN(d.getTime())) {
+        throw new BadRequestException('Invalid end date');
+      }
+      endDate = d;
+    } else {
+      endDate = new Date(now);
+    }
+
+    if (startDate > endDate) {
+      throw new BadRequestException('start must be before end');
+    }
+
+    // Query DB: use date_created as the appointment timestamp for now
+    const rows = await (this.prisma as any).appoinment_details.findMany({
+      where: {
+        date_created: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+      orderBy: { date_created: 'asc' },
+      select: {
+        user_id: true,
+        first_name: true,
+        last_name: true,
+        email: true,
+        contact_number: true,
+        reason: true,
+        status: true,
+        date_created: true,
+      },
+    });
+
+    const events = rows.map((r) => {
+      const status = (r.status || '').toLowerCase();
+      const title = `${r.first_name} ${r.last_name}`.trim() || 'Appointment';
+      // map status to colors (optional)
+      const colorMap: Record<string, string> = {
+        accepted: '#22c55e',
+        denied: '#ef4444',
+        pending: '#f59e0b',
+        active: '#3b82f6',
+      };
+      const backgroundColor = colorMap[status] || '#6b7280';
+
+      return {
+        id: r.user_id,
+        title,
+        start: r.date_created,
+        end: r.date_created,
+        allDay: true,
+        backgroundColor,
+        extendedProps: {
+          email: r.email,
+          contactNumber: r.contact_number,
+          reason: r.reason,
+          status,
+        },
+      };
+    });
+
+    return { events };
+  }
 
   @Post('decision')
   @HttpCode(200)

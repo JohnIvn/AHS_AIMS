@@ -7,6 +7,7 @@ import Home from "./components/Home/Home";
 import Appointments from "./components/Admin/Appointments";
 import Stats from "./components/Admin/Stats";
 import Profile from "./components/Admin/Profile";
+import Calendar from "./components/Admin/Calendar";
 
 function App() {
   const [tab, setTab] = useState("signin");
@@ -21,7 +22,9 @@ function App() {
       if (tab === "signin" || tab === "signup" || tab === "forgot") {
         setTab("home");
       }
-    } else if (["home", "appointments", "profile", "stats"].includes(tab)) {
+    } else if (
+      ["home", "appointments", "profile", "stats", "calendar"].includes(tab)
+    ) {
       setTab("signin");
     }
   }, [auth]);
@@ -71,6 +74,12 @@ function App() {
               Appointments
             </button>
             <button
+              className={tab === "calendar" ? "active" : ""}
+              onClick={() => setTab("calendar")}
+            >
+              Calendar
+            </button>
+            <button
               className={tab === "stats" ? "active" : ""}
               onClick={() => setTab("stats")}
             >
@@ -115,6 +124,7 @@ function App() {
         )}
         {tab === "appointments" && <Appointments />}
         {tab === "stats" && <Stats />}
+        {tab === "calendar" && <Calendar />}
         {tab === "profile" && (
           <Profile user={auth?.user} onUpdateUser={handleUpdateUser} />
         )}
