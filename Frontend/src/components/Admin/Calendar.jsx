@@ -3,9 +3,8 @@ import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
-import "@fullcalendar/core/index.css";
-import "@fullcalendar/daygrid/index.css";
-import "@fullcalendar/timegrid/index.css";
+// Note: FullCalendar v6 packages no longer include CSS files in npm;
+// default styles are minimal and components render without importing CSS here.
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3000";
 

@@ -36,7 +36,6 @@ export class AppointmentsController {
     @Query('start') start?: string,
     @Query('end') end?: string,
   ) {
-    // parse range; default to last 30 days
     let startDate: Date;
     let endDate: Date;
     const now = new Date();
@@ -65,7 +64,6 @@ export class AppointmentsController {
       throw new BadRequestException('start must be before end');
     }
 
-    // Query DB: use date_created as the appointment timestamp for now
     const rows = await (this.prisma as any).appoinment_details.findMany({
       where: {
         date_created: {
@@ -89,7 +87,6 @@ export class AppointmentsController {
     const events = rows.map((r) => {
       const status = (r.status || '').toLowerCase();
       const title = `${r.first_name} ${r.last_name}`.trim() || 'Appointment';
-      // map status to colors (optional)
       const colorMap: Record<string, string> = {
         accepted: '#22c55e',
         denied: '#ef4444',
