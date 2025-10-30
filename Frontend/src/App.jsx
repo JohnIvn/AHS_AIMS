@@ -8,6 +8,7 @@ import Appointments from "./components/Admin/Appointments";
 import Stats from "./components/Admin/Stats";
 import Profile from "./components/Admin/Profile";
 import Calendar from "./components/Admin/Calendar";
+import Printables from "./components/Admin/Printables";
 
 function App() {
   const [tab, setTab] = useState("signin");
@@ -23,7 +24,14 @@ function App() {
         setTab("home");
       }
     } else if (
-      ["home", "appointments", "profile", "stats", "calendar"].includes(tab)
+      [
+        "home",
+        "appointments",
+        "profile",
+        "stats",
+        "calendar",
+        "printables",
+      ].includes(tab)
     ) {
       setTab("signin");
     }
@@ -80,6 +88,12 @@ function App() {
               Calendar
             </button>
             <button
+              className={tab === "printables" ? "active" : ""}
+              onClick={() => setTab("printables")}
+            >
+              Printables
+            </button>
+            <button
               className={tab === "stats" ? "active" : ""}
               onClick={() => setTab("stats")}
             >
@@ -125,6 +139,7 @@ function App() {
         {tab === "appointments" && <Appointments />}
         {tab === "stats" && <Stats />}
         {tab === "calendar" && <Calendar />}
+        {tab === "printables" && <Printables />}
         {tab === "profile" && (
           <Profile user={auth?.user} onUpdateUser={handleUpdateUser} />
         )}

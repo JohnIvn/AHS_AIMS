@@ -31,6 +31,25 @@ export class AppointmentsController {
     private readonly emailService: EmailService,
   ) {}
 
+  @Get('approved')
+  async getApproved() {
+    const rows = await (this.prisma as any).appoinment_details.findMany({
+      where: { status: { equals: 'accepted', mode: 'insensitive' } },
+      orderBy: { date_created: 'desc' },
+      select: {
+        user_id: true,
+        first_name: true,
+        last_name: true,
+        email: true,
+        contact_number: true,
+        reason: true,
+        status: true,
+        date_created: true,
+      },
+    });
+    return { items: rows };
+  }
+
   @Get('calendar')
   async getCalendar(
     @Query('start') start?: string,
