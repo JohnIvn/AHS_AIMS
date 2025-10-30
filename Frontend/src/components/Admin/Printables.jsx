@@ -315,23 +315,116 @@ function PrintableForm({ item, index }) {
 
 export default function Printables() {
   const { items, loading, error } = useApprovedAppointments();
+  const [selected, setSelected] = useState(null);
+  const [show, setShow] = useState(false);
+
+  const openForm = (item) => {
+    setSelected(item);
+    setShow(true);
+  };
+  const closeForm = () => {
+    setShow(false);
+    // keep selected in case user wants to re-open quickly
+  };
 
   return (
-    <div>
-      <h2>Printables</h2>
-      <p style={{ color: "#6b7280" }}>
-        Approved appointments formatted for printing and PDF export.
-      </p>
-      {loading && <div>Loading…</div>}
-      {error && <div style={{ color: "#b91c1c" }}>{error}</div>}
-      {!loading && !error && items.length === 0 && (
-        <div>No approved appointments yet.</div>
-      )}
-      <div>
-        {items.map((item, i) => (
-          <PrintableForm key={item.user_id} item={item} index={i} />
-        ))}
+    <div className="auth-card">
+      <div className="toolbar" style={{ marginBottom: 8 }}>
+        <div>
+          <h2 style={{ margin: 0 }}>Printables</h2>
+          <div style={{ color: "var(--muted)", fontSize: 13 }}>
+            Approved appointments formatted for printing with on-demand PDF
+            export.
+          </div>
+        </div>
       </div>
+
+      {loading && <div>Loading…</div>}
+      {error && (
+        <div className="messages">
+          <li className="error">{error}</li>
+        </div>
+      )}
+      {!loading && !error && items.length === 0 && (
+        <div className="messages">
+          <li>No approved appointments yet.</li>
+        </div>
+      )}
+
+      {items.length > 0 && (
+        <div className="table-wrapper">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Student</th>
+                <th>Email</th>
+                <th>Date</th>
+                <th>Reason</th>
+                <th className="actions">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((it) => (
+                <tr key={it.user_id}>
+                  <td>
+                    {`${it.first_name || ""} ${it.last_name || ""}`.trim()}
+                  </td>
+                  <td className="truncate">{it.email}</td>
+                  <td>{new Date(it.date_created).toLocaleDateString()}</td>
+                  <td className="truncate">{it.reason || "-"}</td>
+                  <td className="actions">
+                    <div className="actions-inline">
+                      <button onClick={() => openForm(it)}>Open Form</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {show && selected && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 16,
+            zIndex: 50,
+          }}
+        >
+          <div
+            style={{
+              background: "var(--panel)",
+              border: "1px solid rgba(255,255,255,0.06)",
+              borderRadius: 12,
+              maxHeight: "90vh",
+              overflow: "auto",
+              padding: 12,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 8,
+              }}
+            >
+              <h3 style={{ margin: 0 }}>Printable Form</h3>
+              <button onClick={closeForm}>Close</button>
+            </div>
+            <PrintableForm
+              item={selected}
+              index={items.findIndex((x) => x.user_id === selected.user_id)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
