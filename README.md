@@ -35,6 +35,100 @@ Frontend/
   package.json         # Scripts and deps for frontend
 ```
 
+## Repository directory list
+
+Full repo tree (key files only):
+
+```
+LICENSE
+README.md
+
+Backend/
+  eslint.config.mjs              
+  nest-cli.json
+  package.json
+  prisma.config.ts
+  tsconfig.build.json
+  tsconfig.json
+
+  controllers/
+    appointments.controller.ts
+    forgot-password.controller.ts
+    google-forms.controller.ts
+    profile.controller.ts
+    signin.controller.ts
+    signup.controller.ts
+
+  prisma/
+    schema.prisma
+    migrations/
+      migration_lock.toml
+      20251024075301_init/
+        migration.sql
+      20251024083420_appointment/
+        migration.sql
+      20251027130945_verification_code/
+        migration.sql
+      20251029053457_appoinment_modified/
+        migration.sql
+
+  service/
+    database/
+      database.service.ts
+    email/
+      email.service.ts
+      email.utils.ts
+    google/
+      google-forms.service.ts
+    prisma/
+      prisma.service.ts
+
+  src/
+    app.module.ts
+    main.ts
+
+  test/
+    e2e/
+    spec/
+      appointments.controller.spec.ts
+      forgot-password.controller.spec.ts
+      google-forms.controller.spec.ts
+      profile.controller.spec.ts
+      signin.controller.spec.ts
+      signup.controller.spec.ts
+
+Frontend/
+  eslint.config.js
+  index.html
+  package.json
+  vite.config.js
+
+  electron/
+    main.js
+    preload.js
+    scripts/
+
+  public/
+
+  src/
+    App.css
+    App.jsx
+    index.css
+    main.jsx
+    assets/
+    components/
+      Admin/
+        Appointments.jsx
+        Profile.jsx
+        Stats.jsx
+      Auth/
+        ForgotPassword.jsx
+        SignIn.jsx
+        SignUpStaff.jsx
+      Home/
+        Home.jsx
+```
+
 ## Prerequisites
 
 - Node.js 18+ (LTS recommended)
