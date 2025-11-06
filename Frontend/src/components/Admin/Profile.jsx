@@ -651,15 +651,18 @@ export default function Profile({ user, onUpdateUser }) {
                 try {
                   setFgLoading(true);
                   setFgError("");
-                  const res = await fetch(getApiUrl(`/api/auth/reset-password`), {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      email: form.email,
-                      code: fg.code,
-                      newPassword: fg.new_password,
-                    }),
-                  });
+                  const res = await fetch(
+                    getApiUrl(`/api/auth/reset-password`),
+                    {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        email: form.email,
+                        code: fg.code,
+                        newPassword: fg.new_password,
+                      }),
+                    }
+                  );
                   const data = await res.json();
                   if (!data?.success)
                     throw new Error(
