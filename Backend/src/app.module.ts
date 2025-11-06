@@ -13,6 +13,7 @@ import { SignUpStaffController } from '../controllers/signup.controller';
 import { ForgotPasswordController } from '../controllers/forgot-password.controller';
 import { ProfileController } from '../controllers/profile.controller';
 import { AppointmentsController } from '../controllers/appointments.controller';
+import { AvailabilityController } from '../controllers/availability.controller';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -32,6 +33,7 @@ import { AppointmentsController } from '../controllers/appointments.controller';
     ForgotPasswordController,
     ProfileController,
     AppointmentsController,
+    AvailabilityController,
   ],
   providers: [GoogleFormsService, EmailService, DatabaseService, PrismaService],
 })

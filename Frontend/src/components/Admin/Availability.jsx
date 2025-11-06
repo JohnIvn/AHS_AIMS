@@ -1,23 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-
-const LS_KEY = "availabilityBlocks";
-
-function loadBlocks() {
-  try {
-    const raw = localStorage.getItem(LS_KEY);
-    if (!raw) return { days: [], slots: [] };
-    const parsed = JSON.parse(raw);
-    return {
-      days: Array.isArray(parsed.days) ? parsed.days : [],
-      slots: Array.isArray(parsed.slots) ? parsed.slots : [],
-    };
-  } catch {
-    return { days: [], slots: [] };
-  }
-}
-function saveBlocks(data) {
-  localStorage.setItem(LS_KEY, JSON.stringify(data));
-}
+import { API_BASE } from "../../utils/api";
 
 function normalizeDate(d) {
   if (!d) return "";
@@ -39,7 +21,8 @@ function timeToMinutes(t) {
 }
 
 export default function Availability() {
-  const [data, setData] = useState(() => loadBlocks());
+  const [data, setData] = useState({ days: [], slots: [] });
+  const [loading, setLoading] = useState(true);
 
   const [dayInput, setDayInput] = useState("");
   const [slotDate, setSlotDate] = useState("");
@@ -48,30 +31,71 @@ export default function Availability() {
   const [slotReason, setSlotReason] = useState("");
   const [messages, setMessages] = useState([]);
 
+  // Fetch availability data from backend
   useEffect(() => {
-    saveBlocks(data);
-  }, [data]);
+    fetchAvailability();
+  }, []);
+
+  const fetchAvailability = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch(`${API_BASE}/availability`);
+      if (!res.ok) throw new Error("Failed to fetch availability");
+      const json = await res.json();
+      setData({
+        days: json.days || [],
+        slots: json.slots || [],
+      });
+    } catch (err) {
+      addMessage("error", err.message || "Failed to load availability");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const addMessage = (kind, text) => {
     setMessages((prev) => [...prev.slice(-3), { kind, text, ts: Date.now() }]);
     setTimeout(() => setMessages((prev) => prev.slice(1)), 4000);
   };
 
-  const addDay = () => {
+  const addDay = async () => {
     const d = normalizeDate(dayInput);
     if (!d) return addMessage("error", "Please pick a date");
-    if (data.days.includes(d))
-      return addMessage("error", "Date already blocked");
-    setData((prev) => ({ ...prev, days: [...prev.days, d].sort() }));
-    setDayInput("");
-    addMessage("success", `Blocked ${d}`);
+
+    try {
+      const res = await fetch(`${API_BASE}/availability/dates`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: d }),
+      });
+
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.message || "Failed to block date");
+
+      setDayInput("");
+      addMessage("success", `Blocked ${d}`);
+      await fetchAvailability();
+    } catch (err) {
+      addMessage("error", err.message || "Failed to block date");
+    }
   };
 
-  const removeDay = (d) => {
-    setData((prev) => ({ ...prev, days: prev.days.filter((x) => x !== d) }));
+  const removeDay = async (id) => {
+    try {
+      const res = await fetch(`${API_BASE}/availability/dates/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) throw new Error("Failed to remove blocked date");
+
+      addMessage("success", "Blocked date removed");
+      await fetchAvailability();
+    } catch (err) {
+      addMessage("error", err.message || "Failed to remove date");
+    }
   };
 
-  const addSlot = () => {
+  const addSlot = async () => {
     const d = normalizeDate(slotDate);
     if (!d) return addMessage("error", "Pick a date for the slot");
     const s = timeToMinutes(slotStart);
@@ -80,38 +104,42 @@ export default function Availability() {
       return addMessage("error", "Start and end time are required");
     if (e <= s) return addMessage("error", "End time must be after start time");
 
-    // detect overlap with existing slots same date
-    const overlap = data.slots.some((it) => {
-      if (it.date !== d) return false;
-      const is = timeToMinutes(it.start);
-      const ie = timeToMinutes(it.end);
-      return Math.max(is, s) < Math.min(ie, e);
-    });
-    if (overlap)
-      return addMessage("error", "Overlaps an existing slot for that date");
+    try {
+      const res = await fetch(`${API_BASE}/availability/slots`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          date: d,
+          startTime: slotStart,
+          endTime: slotEnd,
+          reason: slotReason.trim() || undefined,
+        }),
+      });
 
-    const next = {
-      id: crypto.randomUUID(),
-      date: d,
-      start: slotStart,
-      end: slotEnd,
-      reason: slotReason.trim() || undefined,
-    };
-    setData((prev) => ({
-      ...prev,
-      slots: [...prev.slots, next].sort((a, b) =>
-        (a.date + a.start).localeCompare(b.date + b.start)
-      ),
-    }));
-    setSlotReason("");
-    addMessage("success", `Blocked ${d} ${slotStart}-${slotEnd}`);
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.message || "Failed to block slot");
+
+      setSlotReason("");
+      addMessage("success", `Blocked ${d} ${slotStart}-${slotEnd}`);
+      await fetchAvailability();
+    } catch (err) {
+      addMessage("error", err.message || "Failed to block time slot");
+    }
   };
 
-  const removeSlot = (id) => {
-    setData((prev) => ({
-      ...prev,
-      slots: prev.slots.filter((x) => x.id !== id),
-    }));
+  const removeSlot = async (id) => {
+    try {
+      const res = await fetch(`${API_BASE}/availability/slots/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) throw new Error("Failed to remove blocked slot");
+
+      addMessage("success", "Blocked time slot removed");
+      await fetchAvailability();
+    } catch (err) {
+      addMessage("error", err.message || "Failed to remove slot");
+    }
   };
 
   const groupedSlots = useMemo(() => {
@@ -125,10 +153,31 @@ export default function Availability() {
     return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]));
   }, [data.slots]);
 
-  const clearAll = () => {
+  const clearAll = async () => {
     if (!confirm("Remove all blocked days and slots?")) return;
-    setData({ days: [], slots: [] });
+
+    try {
+      const res = await fetch(`${API_BASE}/availability/clear`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) throw new Error("Failed to clear all blocks");
+
+      addMessage("success", "All blocks cleared");
+      await fetchAvailability();
+    } catch (err) {
+      addMessage("error", err.message || "Failed to clear blocks");
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="auth-card">
+        <h2>Availability</h2>
+        <p>Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="auth-card">
@@ -136,8 +185,7 @@ export default function Availability() {
         <div>
           <h2 style={{ margin: 0 }}>Availability</h2>
           <div style={{ color: "var(--muted)", fontSize: 13 }}>
-            Block full dates or specific time slots. Stored locally for now; can
-            be wired to backend later.
+            Block full dates or specific time slots to prevent appointments.
           </div>
         </div>
         <div className="actions-inline">
@@ -177,11 +225,13 @@ export default function Availability() {
                   </tr>
                 ) : (
                   data.days.map((d) => (
-                    <tr key={d}>
-                      <td>{d}</td>
+                    <tr key={d.id}>
+                      <td>{d.date}</td>
                       <td className="actions">
                         <div className="actions-inline">
-                          <button onClick={() => removeDay(d)}>Remove</button>
+                          <button onClick={() => removeDay(d.id)}>
+                            Remove
+                          </button>
                         </div>
                       </td>
                     </tr>

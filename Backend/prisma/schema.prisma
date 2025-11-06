@@ -48,3 +48,21 @@ model admin_account {
   date_created   DateTime @default(now())
   status         String   @default("active")
 }
+
+model blocked_dates {
+  id         String   @id @default(cuid())
+  date       DateTime @unique @db.Date
+  reason     String?
+  created_at DateTime @default(now())
+}
+
+model blocked_time_slots {
+  id         String   @id @default(cuid())
+  date       DateTime @db.Date
+  start_time String
+  end_time   String
+  reason     String?
+  created_at DateTime @default(now())
+
+  @@index([date])
+}
