@@ -30,6 +30,10 @@ export default function Availability() {
   const [slotEnd, setSlotEnd] = useState("");
   const [slotReason, setSlotReason] = useState("");
   const [messages, setMessages] = useState([]);
+  const [syncing, setSyncing] = useState(false);
+  const [googleSheetId, setGoogleSheetId] = useState(
+    localStorage.getItem("googleSheetId") || ""
+  );
 
   // Fetch availability data from backend
   useEffect(() => {
@@ -170,6 +174,35 @@ export default function Availability() {
     }
   };
 
+  const syncToGoogleSheets = async () => {
+    if (!googleSheetId.trim()) {
+      return addMessage("error", "Please enter a Google Sheet ID");
+    }
+
+    try {
+      setSyncing(true);
+      const res = await fetch(`${API_BASE}/availability/sync-to-sheet`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sheetId: googleSheetId.trim() }),
+      });
+
+      const json = await res.json();
+      if (!res.ok)
+        throw new Error(json.message || "Failed to sync to Google Sheets");
+
+      localStorage.setItem("googleSheetId", googleSheetId.trim());
+      addMessage(
+        "success",
+        `Synced ${json.blockedDatesCount} dates and ${json.blockedSlotsCount} slots to Google Sheets`
+      );
+    } catch (err) {
+      addMessage("error", err.message || "Failed to sync to Google Sheets");
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="auth-card">
@@ -192,6 +225,35 @@ export default function Availability() {
           <button className="secondary" onClick={clearAll}>
             Clear All
           </button>
+        </div>
+      </div>
+
+      {/* Google Sheets Sync Section */}
+      <div
+        className="auth-card"
+        style={{ padding: 12, marginTop: 12, backgroundColor: "#f8f9fa" }}
+      >
+        <h3 style={{ marginTop: 0, fontSize: 14 }}>🔄 Sync to Google Forms</h3>
+        <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 8 }}>
+          Sync blocked dates to Google Sheets so Google Forms can update
+          automatically.
+        </div>
+        <div className="inline">
+          <input
+            type="text"
+            className="input"
+            placeholder="Google Sheet ID (e.g., 1abc...xyz)"
+            value={googleSheetId}
+            onChange={(e) => setGoogleSheetId(e.target.value)}
+            style={{ flex: 1, minWidth: 300 }}
+          />
+          <button onClick={syncToGoogleSheets} disabled={syncing}>
+            {syncing ? "Syncing..." : "Sync Now"}
+          </button>
+        </div>
+        <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>
+          💡 After syncing, Google Apps Script will update your form within 5
+          minutes.
         </div>
       </div>
 

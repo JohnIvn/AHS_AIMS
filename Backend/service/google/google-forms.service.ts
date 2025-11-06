@@ -35,7 +35,10 @@ export class GoogleFormsService {
 
     const auth = new google.auth.GoogleAuth({
       keyFile,
-      scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
+      scopes: [
+        'https://www.googleapis.com/auth/spreadsheets.readonly',
+        'https://www.googleapis.com/auth/spreadsheets',
+      ],
     });
 
     this.sheets = google.sheets({ version: 'v4', auth });
@@ -123,6 +126,86 @@ export class GoogleFormsService {
     } catch (error) {
       console.error('Error fetching sheet names:', error.message);
       throw new Error(`Failed to get sheet names: ${error.message}`);
+    }
+  }
+
+  /**
+   * Write blocked dates and time slots to a Google Sheet
+   * This data will be read by Apps Script to update the Google Form
+   */
+  async syncAvailabilityToSheet(
+    sheetId: string,
+    blockedDates: Array<{ date: string; reason?: string }>,
+    blockedSlots: Array<{ date: string; start: string; end: string; reason?: string }>,
+  ) {
+    try {
+      const sheetName = 'Availability_Data';
+
+      // Prepare blocked dates data
+      const dateRows = [
+        ['Blocked Dates', 'Reason'],
+        ...blockedDates.map((d) => [d.date, d.reason || '']),
+      ];
+
+      // Prepare blocked slots data (with some spacing)
+      const slotRows = [
+        [''], // Empty row for spacing
+        ['Blocked Time Slots', 'Start Time', 'End Time', 'Reason'],
+        ...blockedSlots.map((s) => [s.date, s.start, s.end, s.reason || '']),
+      ];
+
+      const allRows = [...dateRows, ...slotRows];
+
+      // Check if sheet exists, if not create it
+      try {
+        await this.sheets.spreadsheets.get({
+          spreadsheetId: sheetId,
+          ranges: [`${sheetName}!A1`],
+        });
+      } catch (error) {
+        // Sheet doesn't exist, create it
+        await this.sheets.spreadsheets.batchUpdate({
+          spreadsheetId: sheetId,
+          requestBody: {
+            requests: [
+              {
+                addSheet: {
+                  properties: {
+                    title: sheetName,
+                  },
+                },
+              },
+            ],
+          },
+        });
+      }
+
+      // Clear existing data
+      await this.sheets.spreadsheets.values.clear({
+        spreadsheetId: sheetId,
+        range: `${sheetName}!A:Z`,
+      });
+
+      // Write new data
+      await this.sheets.spreadsheets.values.update({
+        spreadsheetId: sheetId,
+        range: `${sheetName}!A1`,
+        valueInputOption: 'RAW',
+        requestBody: {
+          values: allRows,
+        },
+      });
+
+      return {
+        success: true,
+        message: 'Availability data synced to Google Sheets',
+        sheetName,
+        blockedDatesCount: blockedDates.length,
+        blockedSlotsCount: blockedSlots.length,
+      };
+    } catch (error) {
+      console.error('Error syncing to Google Sheets:', error.message);
+      throw new Error(`Failed to sync availability: ${error.message}`);
     }
   }
 }

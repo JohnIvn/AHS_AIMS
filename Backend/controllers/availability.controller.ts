@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import chalk from 'chalk';
 import { PrismaService } from 'service/prisma/prisma.service';
+import { GoogleFormsService } from 'service/google/google-forms.service';
 
 console.log(
   chalk.bgGreen.black('[CONTROLLER]') + '  - Availability controller loaded',
@@ -30,7 +31,10 @@ type BlockedSlotInput = {
 
 @Controller('availability')
 export class AvailabilityController {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly googleService: GoogleFormsService,
+  ) {}
 
   @Get()
   async getAll() {
@@ -258,6 +262,28 @@ export class AvailabilityController {
       success: true,
       message: 'All availability blocks cleared',
     };
+  }
+
+  @Post('sync-to-sheet')
+  @HttpCode(200)
+  async syncToGoogleSheet(@Body() body: { sheetId: string }) {
+    const { sheetId } = body;
+
+    if (!sheetId) {
+      throw new BadRequestException('Google Sheet ID is required');
+    }
+
+    // Get all availability data
+    const availability = await this.getAll();
+
+    // Sync to Google Sheets
+    const result = await this.googleService.syncAvailabilityToSheet(
+      sheetId,
+      availability.days,
+      availability.slots,
+    );
+
+    return result;
   }
 
   private timeToMinutes(time: string): number | null {
