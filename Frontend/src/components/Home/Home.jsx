@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { getApiUrl } from "../../utils/api";
 
 export default function Home({ user, onSignOut, onNavigate }) {
   const name = user
@@ -120,7 +121,7 @@ export default function Home({ user, onSignOut, onNavigate }) {
     const fetchData = async () => {
       try {
         setError("");
-        const res = await fetch("/api/google-forms/responses");
+        const res = await fetch(getApiUrl("/api/google-forms/responses"));
         if (!res.ok) throw new Error(`Request failed: ${res.status}`);
         const json = await res.json();
         const rows = json?.data || [];
@@ -133,7 +134,7 @@ export default function Home({ user, onSignOut, onNavigate }) {
         );
         if (emails.length > 0) {
           try {
-            const chk = await fetch("/api/appointments/check", {
+            const chk = await fetch(getApiUrl("/api/appointments/check"), {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ emails }),

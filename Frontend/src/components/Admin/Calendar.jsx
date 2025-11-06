@@ -3,10 +3,9 @@ import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
+import { API_BASE, getApiUrl } from "../../utils/api";
 // Note: FullCalendar v6 packages no longer include CSS files in npm;
 // default styles are minimal and components render without importing CSS here.
-
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3000";
 
 export default function Calendar() {
   const calendarRef = useRef(null);

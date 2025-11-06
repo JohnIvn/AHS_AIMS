@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getApiUrl } from "../../utils/api";
 
 export default function SignIn({ onForgot, onSuccess }) {
   const [email, setEmail] = useState("");
@@ -14,7 +15,7 @@ export default function SignIn({ onForgot, onSuccess }) {
     setMessage(null);
 
     try {
-      const res = await fetch("/api/auth/signin", {
+      const res = await fetch(getApiUrl("/api/auth/signin"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),

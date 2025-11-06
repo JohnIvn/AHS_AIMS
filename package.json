@@ -7,7 +7,8 @@
     "start": "electron .",
     "build:react": "cd Frontend && npm run build",
     "build:nest": "cd Backend && npm run build",
-    "build:all": "npm run build:react && npm run build:nest",
+    "install:backend": "cd Backend && npm install --production",
+    "build:all": "npm run build:react && npm run build:nest && npm run install:backend",
     "dist": "npm run build:all && electron-builder"
   },
   "build": {
@@ -19,13 +20,33 @@
     "files": [
       "Frontend/electron/**/*",
       "Frontend/dist/**/*",
-      "Backend/dist/**/*",
       "package.json"
     ],
     "extraResources": [
       {
-        "from": "Backend/dist/",
-        "to": "dist"
+        "from": "Backend/dist",
+        "to": "Backend/dist"
+      },
+      {
+        "from": "Backend/node_modules",
+        "to": "Backend/node_modules"
+      },
+      {
+        "from": "Backend/package.json",
+        "to": "Backend/package.json"
+      },
+      {
+        "from": "Backend/prisma",
+        "to": "Backend/prisma"
+      },
+      {
+        "from": "Backend/.env",
+        "to": "Backend/.env",
+        "filter": "**/*"
+      },
+      {
+        "from": "Backend/key.json",
+        "to": "Backend/key.json"
       }
     ],
     "win": {

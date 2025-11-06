@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3000";
+import { API_BASE, getApiUrl } from "../../utils/api";
 
 function useApprovedAppointments() {
   const [items, setItems] = useState([]);

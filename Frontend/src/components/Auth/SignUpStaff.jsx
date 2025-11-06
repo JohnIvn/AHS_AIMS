@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
+import { getApiUrl } from "../../utils/api";
 
 export default function SignUpStaff({ onSuccess }) {
   const [form, setForm] = useState({
@@ -90,7 +91,7 @@ export default function SignUpStaff({ onSuccess }) {
     }
     setLoading((l) => ({ ...l, email: true }));
     try {
-      const res = await fetch("/api/auth/check-email-staff", {
+      const res = await fetch(getApiUrl("/api/auth/check-email-staff"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: form.email }),
@@ -128,7 +129,7 @@ export default function SignUpStaff({ onSuccess }) {
     }
     setLoading((l) => ({ ...l, phone: true }));
     try {
-      const res = await fetch("/api/auth/check-phone-staff", {
+      const res = await fetch(getApiUrl("/api/auth/check-phone-staff"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ contact_number: form.contact_number }),
@@ -162,7 +163,7 @@ export default function SignUpStaff({ onSuccess }) {
     }
     setLoading((l) => ({ ...l, code: true }));
     try {
-      const res = await fetch("/api/auth/send-verification-staff", {
+      const res = await fetch(getApiUrl("/api/auth/send-verification-staff"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: form.email }),
@@ -220,7 +221,7 @@ export default function SignUpStaff({ onSuccess }) {
     setStaff(null);
 
     try {
-      const res = await fetch("/api/auth/signupst", {
+      const res = await fetch(getApiUrl("/api/auth/signupst"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),

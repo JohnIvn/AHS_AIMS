@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { getApiUrl } from "../../utils/api";
 
 export default function Profile({ user, onUpdateUser }) {
   const [form, setForm] = useState({
@@ -43,7 +44,7 @@ export default function Profile({ user, onUpdateUser }) {
     try {
       setLoading(true);
       setError("");
-      const res = await fetch(`/api/profile/me`, {
+      const res = await fetch(getApiUrl(`/api/profile/me`), {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -125,7 +126,7 @@ export default function Profile({ user, onUpdateUser }) {
     try {
       setLoading(true);
       setError("");
-      const res = await fetch(`/api/profile`, {
+      const res = await fetch(getApiUrl(`/api/profile`), {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -167,7 +168,7 @@ export default function Profile({ user, onUpdateUser }) {
       setPwLoading(true);
       setPwError("");
       setPwSaved(false);
-      const res = await fetch(`/api/profile/change-password`, {
+      const res = await fetch(getApiUrl(`/api/profile/change-password`), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -261,7 +262,7 @@ export default function Profile({ user, onUpdateUser }) {
     const t = setTimeout(async () => {
       try {
         setPhoneLoading(true);
-        const res = await fetch(`/api/auth/check-phone-staff`, {
+        const res = await fetch(getApiUrl(`/api/auth/check-phone-staff`), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ contact_number: form.contact_number }),
@@ -531,7 +532,7 @@ export default function Profile({ user, onUpdateUser }) {
               setFgLoading(true);
               setFgError("");
               setFgSent(false);
-              const res = await fetch(`/api/auth/forgot-password`, {
+              const res = await fetch(getApiUrl(`/api/auth/forgot-password`), {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email: form.email }),
@@ -650,7 +651,7 @@ export default function Profile({ user, onUpdateUser }) {
                 try {
                   setFgLoading(true);
                   setFgError("");
-                  const res = await fetch(`/api/auth/reset-password`, {
+                  const res = await fetch(getApiUrl(`/api/auth/reset-password`), {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { getApiUrl } from "../../utils/api";
 
 export default function Appointments() {
   const [status, setStatus] = useState("pending");
@@ -140,7 +141,7 @@ export default function Appointments() {
     const fetchData = async () => {
       try {
         setError("");
-        const res = await fetch("/api/google-forms/responses");
+        const res = await fetch(getApiUrl("/api/google-forms/responses"));
         if (!res.ok) throw new Error(`Request failed: ${res.status}`);
         const json = await res.json();
         const rows = json?.data || [];
@@ -154,7 +155,7 @@ export default function Appointments() {
         );
         if (emails.length > 0) {
           try {
-            const chk = await fetch("/api/appointments/check", {
+            const chk = await fetch(getApiUrl("/api/appointments/check"), {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ emails }),
@@ -282,7 +283,7 @@ export default function Appointments() {
         reason: item.reason || "",
         status: decision,
       };
-      const res = await fetch("/api/appointments/decision", {
+      const res = await fetch(getApiUrl("/api/appointments/decision"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

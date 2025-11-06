@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getApiUrl } from "../../utils/api";
 
 export default function ForgotPassword({ onBack }) {
   const [step, setStep] = useState(1);
@@ -31,7 +32,7 @@ export default function ForgotPassword({ onBack }) {
     setLoading(true);
     setMessage(null);
     try {
-      const res = await fetch("/api/auth/forgot-password", {
+      const res = await fetch(getApiUrl("/api/auth/forgot-password"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
@@ -83,7 +84,7 @@ export default function ForgotPassword({ onBack }) {
     setLoading(true);
     setMessage(null);
     try {
-      const res = await fetch("/api/auth/reset-password", {
+      const res = await fetch(getApiUrl("/api/auth/reset-password"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, code, newPassword }),

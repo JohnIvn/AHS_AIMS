@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { getApiUrl } from "../../utils/api";
 
 export default function Stats() {
   const [rows, setRows] = useState([]);
@@ -62,7 +63,7 @@ export default function Stats() {
       try {
         setLoading(true);
         setError("");
-        const res = await fetch("/api/google-forms/responses");
+        const res = await fetch(getApiUrl("/api/google-forms/responses"));
         if (!res.ok) throw new Error(`Request failed: ${res.status}`);
         const json = await res.json();
         let mapped = mapRowsToItems(json?.data || []);
@@ -74,7 +75,7 @@ export default function Stats() {
         );
         if (emails.length > 0) {
           try {
-            const chk = await fetch("/api/appointments/check", {
+            const chk = await fetch(getApiUrl("/api/appointments/check"), {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ emails }),
