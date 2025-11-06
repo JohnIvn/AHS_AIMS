@@ -1,0 +1,48 @@
+{
+  "name": "my-electron-app",
+  "version": "1.0.0",
+  "main": "Frontend/electron/main.js",
+  "description": "Electron app with React frontend and NestJS backend",
+  "scripts": {
+    "start": "electron .",
+    "build:react": "cd Frontend && npm run build",
+    "build:nest": "cd Backend && npm run build",
+    "build:all": "npm run build:react && npm run build:nest",
+    "dist": "npm run build:all && electron-builder"
+  },
+  "build": {
+    "appId": "com.example.myapp",
+    "productName": "MyElectronApp",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "Frontend/electron/**/*",
+      "Frontend/dist/**/*",
+      "Backend/dist/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "Backend/dist/",
+        "to": "dist"
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "build/icon.icns"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "build/icons"
+    }
+  },
+  "devDependencies": {
+    "electron": "^39.1.0",
+    "electron-builder": "^26.0.12"
+  }
+}
