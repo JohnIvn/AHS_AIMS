@@ -25,6 +25,9 @@ model appoinment_details {
   contact_number String?
   email          String   @unique
   reason         String?
+  lrn            String?
+  grade          String?
+  section        String?
   status         String   @default("active")
   date_created   DateTime @default(now())
 }
