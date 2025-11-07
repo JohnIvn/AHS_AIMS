@@ -17,7 +17,16 @@ function useApprovedAppointments() {
         const res = await fetch(`${API_BASE}/appointments/approved`);
         if (!res.ok) throw new Error(`Failed to load: ${res.status}`);
         const json = await res.json();
-        if (!ignore) setItems(json.items || []);
+        if (!ignore)
+          setItems(
+            (json.items || []).map((it) => ({
+              ...it,
+              // normalize fallback values to empty strings for easier form binding
+              lrn: it.lrn || "",
+              grade: it.grade || "",
+              section: it.section || "",
+            }))
+          );
       } catch (e) {
         if (!ignore) setError(e.message || String(e));
       } finally {
@@ -72,9 +81,9 @@ function PrintableForm({ item, index, onExportComplete }) {
     schoolAddress: "#95 Makati St. Amparo Subd. Caloocan City",
     date: new Date().toLocaleDateString(),
     studentName: `${item.first_name || ""} ${item.last_name || ""}`.trim(),
-    irn: "",
+    irn: item.lrn || "",
     schoolYear: formatSchoolYear(item.date_created),
-    gradeAndSection: "",
+    gradeAndSection: [item.grade, item.section].filter(Boolean).join(" - "),
     requestType: "1st Request",
     note: "SFO is not valid without SCHOOL SEAL.",
     adviser: "",
@@ -469,6 +478,9 @@ export default function Printables() {
     const studentName = `${item.first_name || ""} ${
       item.last_name || ""
     }`.trim();
+    const gradeAndSection = [item.grade, item.section]
+      .filter(Boolean)
+      .join(" - ");
 
     return `
       <div style="padding: 32px; color: #111827; font-family: serif; background: white; width: 794px;">
@@ -505,9 +517,11 @@ export default function Printables() {
                 <tbody>
                   <tr>
                     <td style="border: 1px solid #374151; padding: 8px;">${studentName}</td>
-                    <td style="border: 1px solid #374151; padding: 8px;"></td>
+                    <td style="border: 1px solid #374151; padding: 8px;">${
+                      item.lrn || ""
+                    }</td>
                     <td style="border: 1px solid #374151; padding: 8px;">${schoolYear}</td>
-                    <td style="border: 1px solid #374151; padding: 8px;"></td>
+                    <td style="border: 1px solid #374151; padding: 8px;">${gradeAndSection}</td>
                   </tr>
                 </tbody>
               </table>
@@ -634,6 +648,9 @@ export default function Printables() {
                   />
                 </th>
                 <th>Student</th>
+                <th>LRN</th>
+                <th>Grade</th>
+                <th>Section</th>
                 <th>Email</th>
                 <th>Date</th>
                 <th>Reason</th>
@@ -663,6 +680,9 @@ export default function Printables() {
                   <td style={{ fontWeight: 500 }}>
                     {`${it.first_name || ""} ${it.last_name || ""}`.trim()}
                   </td>
+                  <td className="truncate">{it.lrn || "-"}</td>
+                  <td className="truncate">{it.grade || "-"}</td>
+                  <td className="truncate">{it.section || "-"}</td>
                   <td className="truncate">{it.email}</td>
                   <td>{new Date(it.date_created).toLocaleDateString()}</td>
                   <td className="truncate">{it.reason || "-"}</td>

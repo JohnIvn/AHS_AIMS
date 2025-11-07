@@ -23,13 +23,17 @@ export class ProfileController {
     private readonly emailService: EmailService,
   ) {}
 
-  private getEmailFromAuthHeader(authHeader?: string): string | null {
+  private getAuthFromHeader(
+    authHeader?: string,
+  ): { email: string; role?: string } | null {
     if (!authHeader) return null;
     const [scheme, token] = authHeader.split(' ');
     if (!token || scheme.toLowerCase() !== 'bearer') return null;
     try {
       const payload = this.jwtService.verify(token);
-      return payload?.email || null;
+      const email = payload?.email || null;
+      if (!email) return null;
+      return { email, role: payload?.role };
     } catch (e) {
       return null;
     }
@@ -37,43 +41,29 @@ export class ProfileController {
 
   @Get('me')
   async getMe(@Headers('authorization') authorization?: string) {
-    const email = this.getEmailFromAuthHeader(authorization);
-    if (!email) return { success: false, message: 'Unauthorized' };
+    const auth = this.getAuthFromHeader(authorization);
+    if (!auth?.email) return { success: false, message: 'Unauthorized' };
 
-    const user = await this.prisma.staff_account.findUnique({
-      where: { email },
-      select: {
-        staff_id: true,
-        email: true,
-        first_name: true,
-        last_name: true,
-        contact_number: true,
-        status: true,
-        date_created: true,
-      },
-    });
+    const role = (auth.role || 'staff').toLowerCase();
 
-    if (!user) return { success: false, message: 'User not found' };
-    return { success: true, user };
-  }
-
-  @Put()
-  async update(
-    @Headers('authorization') authorization: string | undefined,
-    @Body() body: UpdateProfileDto,
-  ) {
-    const email = this.getEmailFromAuthHeader(authorization);
-    if (!email) return { success: false, message: 'Unauthorized' };
-
-    try {
-      const updated = await this.prisma.staff_account.update({
-        where: { email },
-        data: {
-          first_name: body.first_name ?? undefined,
-          last_name: body.last_name ?? undefined,
-          contact_number:
-            body.contact_number === undefined ? undefined : body.contact_number,
+    if (role === 'admin') {
+      const user = await this.prisma.admin_account.findUnique({
+        where: { email: auth.email },
+        select: {
+          admin_id: true,
+          email: true,
+          first_name: true,
+          last_name: true,
+          contact_number: true,
+          status: true,
+          date_created: true,
         },
+      });
+      if (!user) return { success: false, message: 'User not found' };
+      return { success: true, user };
+    } else {
+      const user = await this.prisma.staff_account.findUnique({
+        where: { email: auth.email },
         select: {
           staff_id: true,
           email: true,
@@ -84,7 +74,66 @@ export class ProfileController {
           date_created: true,
         },
       });
-      return { success: true, user: updated };
+      if (!user) return { success: false, message: 'User not found' };
+      return { success: true, user };
+    }
+  }
+
+  @Put()
+  async update(
+    @Headers('authorization') authorization: string | undefined,
+    @Body() body: UpdateProfileDto,
+  ) {
+    const auth = this.getAuthFromHeader(authorization);
+    if (!auth?.email) return { success: false, message: 'Unauthorized' };
+
+    try {
+      const role = (auth.role || 'staff').toLowerCase();
+      if (role === 'admin') {
+        const updated = await this.prisma.admin_account.update({
+          where: { email: auth.email },
+          data: {
+            first_name: body.first_name ?? undefined,
+            last_name: body.last_name ?? undefined,
+            contact_number:
+              body.contact_number === undefined
+                ? undefined
+                : body.contact_number,
+          },
+          select: {
+            admin_id: true,
+            email: true,
+            first_name: true,
+            last_name: true,
+            contact_number: true,
+            status: true,
+            date_created: true,
+          },
+        });
+        return { success: true, user: updated };
+      } else {
+        const updated = await this.prisma.staff_account.update({
+          where: { email: auth.email },
+          data: {
+            first_name: body.first_name ?? undefined,
+            last_name: body.last_name ?? undefined,
+            contact_number:
+              body.contact_number === undefined
+                ? undefined
+                : body.contact_number,
+          },
+          select: {
+            staff_id: true,
+            email: true,
+            first_name: true,
+            last_name: true,
+            contact_number: true,
+            status: true,
+            date_created: true,
+          },
+        });
+        return { success: true, user: updated };
+      }
     } catch (e) {
       console.error(chalk.red('[ERROR] Updating profile:'), e);
       return { success: false, message: 'Failed to update profile' };
@@ -100,8 +149,8 @@ export class ProfileController {
       new_password: string;
     },
   ) {
-    const email = this.getEmailFromAuthHeader(authorization);
-    if (!email) return { success: false, message: 'Unauthorized' };
+    const auth = this.getAuthFromHeader(authorization);
+    if (!auth?.email) return { success: false, message: 'Unauthorized' };
 
     if (!body?.current_password || !body?.new_password) {
       return { success: false, message: 'Missing required fields' };
@@ -124,10 +173,22 @@ export class ProfileController {
     }
 
     try {
-      const account = await this.prisma.staff_account.findUnique({
-        where: { email },
-        select: { password: true, email: true },
-      });
+      const role = (auth.role || 'staff').toLowerCase();
+      let account: { password: string; email: string } | null = null;
+      if (role === 'admin') {
+        const admin = await this.prisma.admin_account.findUnique({
+          where: { email: auth.email },
+          select: { password: true, email: true },
+        });
+        account = admin as any;
+      } else {
+        const staff = await this.prisma.staff_account.findUnique({
+          where: { email: auth.email },
+          select: { password: true, email: true },
+        });
+        account = staff as any;
+      }
+
       if (!account) return { success: false, message: 'User not found' };
 
       const ok = await bcrypt.compare(body.current_password, account.password);
@@ -135,13 +196,20 @@ export class ProfileController {
         return { success: false, message: 'Current password is incorrect' };
 
       const hashed = await bcrypt.hash(body.new_password, 10);
-      await this.prisma.staff_account.update({
-        where: { email },
-        data: { password: hashed },
-      });
+      if (role === 'admin') {
+        await this.prisma.admin_account.update({
+          where: { email: auth.email },
+          data: { password: hashed },
+        });
+      } else {
+        await this.prisma.staff_account.update({
+          where: { email: auth.email },
+          data: { password: hashed },
+        });
+      }
 
       try {
-        await this.emailService.sendPasswordChanged(email);
+        await this.emailService.sendPasswordChanged(auth.email);
       } catch (e) {
         console.warn('[WARN] Failed to send password change email');
       }

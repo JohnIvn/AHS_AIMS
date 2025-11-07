@@ -53,6 +53,26 @@ export default function Appointments() {
         "emailaddress",
         "e-mail",
       ]);
+      const lrnKey = findKey(row, [
+        "lrn",
+        "student_lrn",
+        "learner_reference_number",
+        "lrn_number",
+      ]);
+      const gradeKey = findKey(row, [
+        "grade",
+        "grade_level",
+        "gradelevel",
+        "year_level",
+        "year",
+        "yearlevel",
+      ]);
+      const sectionKey = findKey(row, [
+        "section",
+        "class_section",
+        "section_name",
+        "classsection",
+      ]);
       const reasonKey = findKey(row, ["reason", "purpose", "concern", "notes"]);
       const statusKey = findKey(row, ["status", "appointment_status"]);
       const dateKey = findKey(row, ["date", "appointment_date", "what_date"]);
@@ -89,6 +109,9 @@ export default function Appointments() {
         id: row.id ?? `${patientName || "unknown"}-${dateTime}`,
         patientName,
         email: emailKey ? norm(row[emailKey]) : "",
+        lrn: lrnKey ? norm(row[lrnKey]) : "",
+        grade: gradeKey ? norm(row[gradeKey]) : "",
+        section: sectionKey ? norm(row[sectionKey]) : "",
         dateTime,
         reason: reasonKey ? norm(row[reasonKey]) : "",
         status: statusKey ? norm(row[statusKey]).toLowerCase() : "pending",
@@ -281,6 +304,9 @@ export default function Appointments() {
         email: item.email,
         contactNumber: "",
         reason: item.reason || "",
+        lrn: item.lrn || "",
+        grade: item.grade || "",
+        section: item.section || "",
         status: decision,
       };
       const res = await fetch(getApiUrl("/api/appointments/decision"), {

@@ -24,21 +24,21 @@ model appoinment_details {
   last_name      String
   contact_number String?
   email          String   @unique
-  reason         String?
-  lrn            String?
-  grade          String?
-  section        String?
-  status         String   @default("active")
   date_created   DateTime @default(now())
+  status         String   @default("active")
+  reason         String?
+  grade          String?
+  lrn            String?
+  section        String?
 }
 
 model verification_code {
-  id          String   @id @default(cuid())
-  email       String
-  code        String
-  created_at  DateTime @default(now())
-  expires_at  DateTime
-  used        Boolean  @default(false)
+  id         String   @id @default(cuid())
+  email      String
+  code       String
+  created_at DateTime @default(now())
+  expires_at DateTime
+  used       Boolean  @default(false)
 }
 
 model admin_account {

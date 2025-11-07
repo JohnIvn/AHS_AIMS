@@ -21,6 +21,9 @@ type DecisionBody = {
   email?: string;
   contactNumber?: string;
   reason?: string;
+  lrn?: string;
+  grade?: string;
+  section?: string;
   status?: 'accepted' | 'denied';
 };
 
@@ -43,6 +46,9 @@ export class AppointmentsController {
         email: true,
         contact_number: true,
         reason: true,
+        lrn: true,
+        grade: true,
+        section: true,
         status: true,
         date_created: true,
       },
@@ -98,6 +104,9 @@ export class AppointmentsController {
         email: true,
         contact_number: true,
         reason: true,
+        lrn: true,
+        grade: true,
+        section: true,
         status: true,
         date_created: true,
       },
@@ -125,6 +134,9 @@ export class AppointmentsController {
           email: r.email,
           contactNumber: r.contact_number,
           reason: r.reason,
+          lrn: r.lrn,
+          grade: r.grade,
+          section: r.section,
           status,
         },
       };
@@ -150,6 +162,9 @@ export class AppointmentsController {
     const lastName = (body.lastName || '').trim() || 'Unknown';
     const contactNumber = (body.contactNumber || '').trim() || null;
     const reason = (body.reason || '').trim() || null;
+    const lrn = (body.lrn || '').trim() || null;
+    const grade = (body.grade || '').trim() || null;
+    const section = (body.section || '').trim() || null;
 
     const existing = await (this.prisma as any).appoinment_details.findUnique({
       where: { email },
@@ -171,6 +186,9 @@ export class AppointmentsController {
         last_name: lastName,
         contact_number: contactNumber,
         reason: reason,
+        lrn: lrn,
+        grade: grade,
+        section: section,
         status: status,
       },
       create: {
@@ -179,6 +197,9 @@ export class AppointmentsController {
         contact_number: contactNumber,
         email,
         reason: reason,
+        lrn: lrn,
+        grade: grade,
+        section: section,
         status: status,
       },
     });
