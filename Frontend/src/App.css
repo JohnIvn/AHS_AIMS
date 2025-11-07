@@ -20,9 +20,9 @@ body {
 }
 
 #root {
-  max-width: 920px;
+  max-width: 1200px; /* centralized, consistent viewport width across pages */
   margin: 0 auto;
-  padding: 24px;
+  padding: 24px 32px;
 }
 
 .container {
@@ -96,10 +96,38 @@ header h1 {
   align-items: center;
 }
 
+/* Stat cards for admin lists */
+.stat-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 8px 0 12px;
+}
+.stat-card {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.04),
+    rgba(255, 255, 255, 0.02)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+.stat-card .label {
+  color: var(--muted);
+  font-size: 12px;
+}
+.stat-card .value {
+  font-size: 18px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
 /* Data table styles */
 .table-wrapper {
   margin-top: 12px;
   overflow-x: auto;
+  scrollbar-width: thin;
 }
 .table {
   width: 100%;
@@ -134,7 +162,93 @@ header h1 {
   display: inline-flex;
   gap: 8px;
   align-items: center;
-  flex-wrap: nowrap;
+  flex-wrap: wrap; /* allow wrapping on narrow viewports to avoid sideways scroll */
+}
+
+/* Kebab menu */
+.menu-trigger {
+  all: unset;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.menu-trigger:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+.kebab {
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--text);
+  box-shadow: 0 -6px 0 0 var(--text), 0 6px 0 0 var(--text);
+}
+.dropdown {
+  position: fixed; /* overlay relative to viewport */
+  min-width: 200px;
+  background: #0f1530;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+  z-index: 1000;
+  overflow: hidden;
+}
+.dropdown .menu-item {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  cursor: pointer;
+  color: var(--text);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.dropdown .menu-item:last-child {
+  border-bottom: none;
+}
+.dropdown .menu-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Button variants */
+.btn {
+  all: unset;
+}
+.btn {
+  background: var(--accent);
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.btn:hover {
+  filter: brightness(1.05);
+}
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.btn-neutral {
+  background: rgba(255, 255, 255, 0.06);
+}
+.btn-primary {
+  background: #4f6bed;
+}
+.btn-warning {
+  background: #d97706;
+}
+.btn-danger {
+  background: #dc2626;
+}
+.btn-outline {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 /* Status badges */
@@ -208,7 +322,28 @@ button {
   padding: 10px 14px;
   border-radius: 8px;
   cursor: pointer;
+  font-size: 14px;
 }
+/* Responsive tweaks */
+@media (max-width: 900px) {
+  header .tabs {
+    flex-wrap: wrap;
+  }
+  .grid {
+    grid-template-columns: 1fr; /* stack form fields */
+  }
+  .table thead th,
+  .table tbody td {
+    padding: 10px;
+    font-size: 12px;
+  }
+  .actions-inline button {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+}
+
+/* Remove variable max-width on very large screens to keep a consistent viewport size */
 button:disabled {
   opacity: 0.6;
   cursor: not-allowed;

@@ -353,6 +353,48 @@ export default function StaffManagement() {
     });
   };
 
+  // Global dropdown state (fixed-position popover)
+  const [menuState, setMenuState] = useState({
+    open: false,
+    staff: null,
+    top: 0,
+    left: 0,
+  });
+  const openMenu = (e, staff) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const padding = 12;
+    const width = 220; // expected dropdown width
+    const left = Math.min(
+      window.innerWidth - width - padding,
+      Math.max(padding, rect.right - width)
+    );
+    const top = Math.min(window.innerHeight - 200, rect.bottom + 8);
+    setMenuState({ open: true, staff, top, left });
+  };
+  const closeMenu = () =>
+    setMenuState({ open: false, staff: null, top: 0, left: 0 });
+
+  // Close on outside click, scroll, or resize
+  useEffect(() => {
+    const handler = (e) => {
+      if (
+        !e.target.closest(".dropdown") &&
+        !e.target.closest(".menu-trigger")
+      ) {
+        closeMenu();
+      }
+    };
+    const closeOnScroll = () => closeMenu();
+    window.addEventListener("click", handler);
+    window.addEventListener("scroll", closeOnScroll, true);
+    window.addEventListener("resize", closeOnScroll);
+    return () => {
+      window.removeEventListener("click", handler);
+      window.removeEventListener("scroll", closeOnScroll, true);
+      window.removeEventListener("resize", closeOnScroll);
+    };
+  }, []);
+
   return (
     <div className="auth-card">
       <div className="toolbar">
@@ -363,11 +405,31 @@ export default function StaffManagement() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="input"
-            style={{ maxWidth: 320 }}
+            style={{ maxWidth: 360 }}
           />
-          <button onClick={handleAddStaff} style={{ whiteSpace: "nowrap" }}>
+          <button
+            onClick={handleAddStaff}
+            className="btn btn-primary"
+            style={{ whiteSpace: "nowrap" }}
+          >
             + Add Staff
           </button>
+        </div>
+      </div>
+
+      {/* Stat cards */}
+      <div className="stat-cards">
+        <div className="stat-card">
+          <div className="label">Total</div>
+          <div className="value">{stats.total}</div>
+        </div>
+        <div className="stat-card">
+          <div className="label">Active</div>
+          <div className="value">{stats.active}</div>
+        </div>
+        <div className="stat-card">
+          <div className="label">Inactive</div>
+          <div className="value">{stats.inactive}</div>
         </div>
       </div>
 
@@ -441,42 +503,16 @@ export default function StaffManagement() {
                     <td>{formatDate(staff.date_created)}</td>
                     <td className="actions">
                       <div className="actions-inline">
-                        <button
-                          onClick={() => handleViewStaff(staff)}
-                          style={{ padding: "6px 10px" }}
-                        >
-                          View
-                        </button>
-                        <button
-                          onClick={() => handleEditStaff(staff)}
-                          style={{ padding: "6px 10px" }}
-                          disabled={busyId === staff.staff_id}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleToggleStatus(staff)}
-                          style={{
-                            padding: "6px 10px",
-                            background:
-                              staff.status === "active" ? "#d97706" : "#059669",
-                          }}
-                          disabled={busyId === staff.staff_id}
-                        >
-                          {staff.status === "active"
-                            ? "Deactivate"
-                            : "Activate"}
-                        </button>
-                        <button
-                          onClick={() => handleDeleteStaff(staff)}
-                          style={{
-                            padding: "6px 10px",
-                            background: "#dc2626",
-                          }}
-                          disabled={busyId === staff.staff_id}
-                        >
-                          Delete
-                        </button>
+                        <div className="kebab-menu">
+                          <button
+                            className="menu-trigger"
+                            type="button"
+                            onClick={(e) => openMenu(e, staff)}
+                            disabled={busyId === staff.staff_id}
+                          >
+                            <span className="kebab" />
+                          </button>
+                        </div>
                       </div>
                     </td>
                   </tr>
@@ -487,37 +523,57 @@ export default function StaffManagement() {
         </div>
       )}
 
-      {/* Modal */}
-      {showModal && (
+      {/* Global Kebab Dropdown */}
+      {menuState.open && menuState.staff && (
         <div
-          className="modal-overlay"
-          onClick={handleCloseModal}
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: "rgba(0, 0, 0, 0.5)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 1000,
-          }}
+          className="dropdown"
+          style={{ top: menuState.top, left: menuState.left }}
+          onClick={(e) => e.stopPropagation()}
         >
           <div
-            className="modal-content"
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              background: "white",
-              borderRadius: 8,
-              padding: 24,
-              maxWidth: 600,
-              width: "90%",
-              maxHeight: "90vh",
-              overflow: "auto",
+            className="menu-item"
+            onClick={() => {
+              handleViewStaff(menuState.staff);
+              closeMenu();
             }}
           >
+            View
+          </div>
+          <div
+            className="menu-item"
+            onClick={() => {
+              handleEditStaff(menuState.staff);
+              closeMenu();
+            }}
+          >
+            Edit
+          </div>
+          <div
+            className="menu-item"
+            onClick={() => {
+              handleToggleStatus(menuState.staff);
+              closeMenu();
+            }}
+          >
+            {menuState.staff.status === "active" ? "Deactivate" : "Activate"}
+          </div>
+          <div
+            className="menu-item"
+            style={{ color: "#ff6b6b" }}
+            onClick={() => {
+              handleDeleteStaff(menuState.staff);
+              closeMenu();
+            }}
+          >
+            Delete
+          </div>
+        </div>
+      )}
+
+      {/* Modal */}
+      {showModal && (
+        <div className="modal-overlay" onClick={handleCloseModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div
               style={{
                 display: "flex",
@@ -541,7 +597,7 @@ export default function StaffManagement() {
                   fontSize: 24,
                   cursor: "pointer",
                   padding: 0,
-                  color: "#666",
+                  color: "var(--muted)",
                 }}
               >
                 ×
@@ -671,7 +727,7 @@ export default function StaffManagement() {
                   style={{
                     marginTop: 16,
                     paddingTop: 16,
-                    borderTop: "1px solid #eee",
+                    borderTop: "1px solid rgba(255,255,255,0.12)",
                   }}
                 >
                   <h4 style={{ marginBottom: 12 }}>
