@@ -216,3 +216,30 @@ export async function sendAppointmentDecisionEmail(
 
   await transporter.sendMail(mailOptions);
 }
+
+export async function sendGenericEmail(
+  to: string,
+  subject: string,
+  text: string,
+  html?: string,
+): Promise<void> {
+  const transporter = nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false,
+    auth: {
+      user: process.env.MAIL_USER,
+      pass: process.env.MAIL_PASS,
+    },
+  });
+
+  const mailOptions = {
+    from: `"AHS AIMS" <${process.env.MAIL_USER}>`,
+    to,
+    subject,
+    text,
+    html: html || text,
+  };
+
+  await transporter.sendMail(mailOptions);
+}

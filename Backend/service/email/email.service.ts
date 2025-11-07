@@ -6,6 +6,7 @@ import {
   sendPasswordResetEmail,
   sendPasswordChangedEmail,
   sendAppointmentDecisionEmail,
+  sendGenericEmail,
 } from './email.utils';
 import chalk from 'chalk';
 
@@ -46,5 +47,14 @@ export class EmailService {
     },
   ): Promise<void> {
     await sendAppointmentDecisionEmail(to, details);
+  }
+
+  async sendEmail(
+    to: string,
+    subject: string,
+    text: string,
+    html?: string,
+  ): Promise<void> {
+    await sendGenericEmail(to, subject, text, html);
   }
 }

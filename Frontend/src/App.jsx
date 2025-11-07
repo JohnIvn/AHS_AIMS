@@ -10,6 +10,7 @@ import Profile from "./components/Admin/Profile";
 import Calendar from "./components/Admin/Calendar";
 import Printables from "./components/Admin/Printables";
 import Availability from "./components/Admin/Availability";
+import StaffManagement from "./components/Admin/StaffManagement";
 
 function App() {
   const [tab, setTab] = useState("signin");
@@ -33,6 +34,7 @@ function App() {
         "calendar",
         "printables",
         "availability",
+        "staff",
       ].includes(tab)
     ) {
       setTab("signin");
@@ -107,6 +109,14 @@ function App() {
             >
               Stats
             </button>
+            {auth?.user?.role === "admin" && (
+              <button
+                className={tab === "staff" ? "active" : ""}
+                onClick={() => setTab("staff")}
+              >
+                Staff
+              </button>
+            )}
             <button
               className={tab === "profile" ? "active" : ""}
               onClick={() => setTab("profile")}
@@ -149,6 +159,7 @@ function App() {
         {tab === "calendar" && <Calendar />}
         {tab === "availability" && <Availability />}
         {tab === "printables" && <Printables />}
+        {tab === "staff" && <StaffManagement />}
         {tab === "profile" && (
           <Profile user={auth?.user} onUpdateUser={handleUpdateUser} />
         )}

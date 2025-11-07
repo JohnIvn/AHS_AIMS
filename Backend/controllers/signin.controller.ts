@@ -31,12 +31,39 @@ export class SignInController {
   @Post('signin')
   async signIn(@Body() body: SignInDto) {
     try {
-      const found = await this.prisma.staff_account.findUnique({
+      // First, try to find admin account
+      let foundAdmin = await this.prisma.admin_account.findUnique({
         where: { email: body.email },
       });
 
       let role = 'staff';
-      const user = found as unknown as User | null;
+      let user: User | null = null;
+
+      if (foundAdmin) {
+        // Admin account found
+        user = foundAdmin as unknown as User;
+        role = 'admin';
+
+        // Check if admin account is active
+        if (foundAdmin.status !== 'active') {
+          return { success: false, message: 'Account is inactive' };
+        }
+      } else {
+        // Try staff account
+        const foundStaff = await this.prisma.staff_account.findUnique({
+          where: { email: body.email },
+        });
+
+        if (foundStaff) {
+          user = foundStaff as unknown as User;
+          role = 'staff';
+
+          // Check if staff account is active
+          if (foundStaff.status !== 'active') {
+            return { success: false, message: 'Account is inactive' };
+          }
+        }
+      }
 
       if (!user) {
         return { success: false, message: 'User not found' };
@@ -60,6 +87,7 @@ export class SignInController {
           email: user.email,
           first_name: user.first_name,
           last_name: user.last_name,
+          role: role,
         },
       };
     } catch (err) {
