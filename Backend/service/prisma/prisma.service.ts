@@ -10,16 +10,13 @@ export class PrismaService
   implements OnModuleInit, OnModuleDestroy
 {
   constructor() {
-    // Append pgbouncer parameter to disable prepared statements
+    // Configure connection pool for better management
     const databaseUrl = process.env.DATABASE_URL || '';
-    const urlWithParams = databaseUrl.includes('?')
-      ? `${databaseUrl}&pgbouncer=true`
-      : `${databaseUrl}?pgbouncer=true`;
 
     super({
       datasources: {
         db: {
-          url: urlWithParams,
+          url: databaseUrl,
         },
       },
       log: ['error', 'warn'],
