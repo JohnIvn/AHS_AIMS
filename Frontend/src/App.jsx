@@ -91,12 +91,12 @@ function App() {
             >
               Calendar
             </button>
-            <button
+            {/* <button
               className={tab === "availability" ? "active" : ""}
               onClick={() => setTab("availability")}
             >
               Availability
-            </button>
+            </button> */}
             <button
               className={tab === "printables" ? "active" : ""}
               onClick={() => setTab("printables")}

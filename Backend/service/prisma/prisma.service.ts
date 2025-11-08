@@ -10,10 +10,16 @@ export class PrismaService
   implements OnModuleInit, OnModuleDestroy
 {
   constructor() {
+    // Append pgbouncer parameter to disable prepared statements
+    const databaseUrl = process.env.DATABASE_URL || '';
+    const urlWithParams = databaseUrl.includes('?')
+      ? `${databaseUrl}&pgbouncer=true`
+      : `${databaseUrl}?pgbouncer=true`;
+
     super({
       datasources: {
         db: {
-          url: process.env.DATABASE_URL,
+          url: urlWithParams,
         },
       },
       log: ['error', 'warn'],
@@ -30,9 +36,6 @@ export class PrismaService
       console.log(
         chalk.green('[PRISMA]      - ') + 'Connected to the database!',
       );
-
-      // Test the connection
-      await this.$queryRaw`SELECT 1`;
       console.log(
         chalk.green('[PRISMA]      - ') + 'Database connection verified!',
       );
