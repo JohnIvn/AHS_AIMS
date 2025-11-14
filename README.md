@@ -1,4 +1,4 @@
-## AHS AIMS — Appointments and Admin System
+## AHS IAWS — Information and Appointment Website for Amparo High School
 
 This repository contains a React + Vite frontend and a NestJS + Prisma backend for managing staff sign-up/sign-in, admin profile, password changes, appointment decisions, and Google Sheets integration for form responses. Email notifications are sent via SMTP.
 
